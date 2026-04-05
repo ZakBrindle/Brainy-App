@@ -7,6 +7,9 @@ import Dashboard from './components/Dashboard';
 import SettingsScreen from './components/Settings';
 import FriendsList from './components/FriendsList';
 import QuizApp from './components/QuizApp';
+import ShopScreen from './components/Shop';
+import QuestLobby from './components/QuestLobby';
+import QuestGameLoop from './components/QuestGameLoop';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -15,7 +18,9 @@ export default function App() {
   const [profileData, setProfileData] = useState(null);
   const [parentUid, setParentUid] = useState(null);
   
-  const [currentView, setCurrentView] = useState('dashboard'); // dashboard, settings, friends, quiz
+  const [currentView, setCurrentView] = useState('dashboard'); // dashboard, settings, friends, quiz, shop, questLobby, questGame
+  const [activeQuest, setActiveQuest] = useState(null);
+  const [activeQuestId, setActiveQuestId] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -85,6 +90,37 @@ export default function App() {
       {currentView === 'quiz' && (
         <QuizApp 
           user={user} 
+          onBack={() => setCurrentView('dashboard')} 
+        />
+      )}
+
+      {currentView === 'shop' && (
+        <ShopScreen 
+          user={user} 
+          profile={profileData}
+          onBack={() => setCurrentView('dashboard')} 
+        />
+      )}
+
+      {currentView === 'questLobby' && (
+        <QuestLobby 
+          user={user} 
+          profile={profileData}
+          onBack={() => setCurrentView('dashboard')} 
+          onStartQuest={(quest, id) => {
+            setActiveQuest(quest);
+            setActiveQuestId(id);
+            setCurrentView('questGame');
+          }}
+        />
+      )}
+
+      {currentView === 'questGame' && (
+        <QuestGameLoop 
+          user={user} 
+          profile={profileData}
+          questId={activeQuestId}
+          initialQuest={activeQuest}
           onBack={() => setCurrentView('dashboard')} 
         />
       )}

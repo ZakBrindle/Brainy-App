@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Star, HelpCircle, Check, X, Sparkles, Brain, Trophy, ArrowRight, RefreshCw, AlertCircle, History, Medal, ArrowLeft } from 'lucide-react';
+import { Play, Star, HelpCircle, Check, X, Sparkles, Brain, Trophy, ArrowRight, RefreshCw, AlertCircle, History, Medal, ArrowLeft, Eye } from 'lucide-react';
 import { doc, getDoc, setDoc, collection, onSnapshot, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -100,6 +100,25 @@ const generateQuizWithAI = async (topic, difficulty, numQuestions, previousQuest
     }
 };
 
+const calculateCrystals = (difficulty, score, total) => {
+    const percent = (score / total) * 100;
+    if (difficulty === 'Easy') {
+        return percent === 100 ? 10 : 0;
+    }
+    if (difficulty === 'Medium') {
+        if (percent === 100) return 20;
+        if (score >= 5) return 10;
+        return 0;
+    }
+    if (difficulty === 'Hard') {
+        if (percent === 100) return 30;
+        if (score >= 8) return 20;
+        if (score >= 5) return 10;
+        return 0;
+    }
+    return 0;
+};
+
 const CartoonButton = ({ children, onClick, colorClass = "bg-yellow-400 hover:bg-yellow-300", className = "", disabled = false }) => (
     <button
         onClick={onClick}
@@ -120,10 +139,10 @@ const CartoonButton = ({ children, onClick, colorClass = "bg-yellow-400 hover:bg
     </button>
 );
 
-export default function QuizApp({ user, onBack }) {
-    const [step, setStep] = useState('home');
-    const [difficulty, setDifficulty] = useState('');
-    const [topic, setTopic] = useState('');
+export default function QuizApp({ user, onBack, questMode = false, difficulty: forcedDifficulty = '', forcedTopic = '', onQuestComplete, peekOption = false }) {
+    const [step, setStep] = useState(questMode ? 'loading' : 'home');
+    const [difficulty, setDifficulty] = useState(forcedDifficulty);
+    const [topic, setTopic] = useState(forcedTopic);
     const [questions, setQuestions] = useState([]);
     const [currentQIndex, setCurrentQIndex] = useState(0);
 
@@ -133,11 +152,20 @@ export default function QuizApp({ user, onBack }) {
     const [onlyNewQuestions, setOnlyNewQuestions] = useState(true);
     const [sessionHistory, setSessionHistory] = useState([]);
 
-    const [profile, setProfile] = useState({ xp: 0, lastMonthRank: "None", currentMonth: new Date().toISOString().slice(0, 7) });
+    const [profile, setProfile] = useState({ 
+        xp: 0, 
+        lastMonthRank: "None", 
+        currentMonth: new Date().toISOString().slice(0, 7),
+        crystals: 0,
+        items5050: 0,
+        itemsPeek: 0
+    });
     const [history, setHistory] = useState([]);
+    const [disabledOptions, setDisabledOptions] = useState([]);
 
     useEffect(() => {
         if (!user) return;
+        
         const profileRef = doc(db, 'users', user.uid);
         const unsubProfile = onSnapshot(profileRef, (docSnap) => {
             const nowMonth = new Date().toISOString().slice(0, 7);
@@ -146,7 +174,10 @@ export default function QuizApp({ user, onBack }) {
                 setProfile({
                    xp: data.xp || 0,
                    lastMonthRank: data.lastMonthRank || "None",
-                   currentMonth: data.currentMonth || nowMonth
+                   currentMonth: data.currentMonth || nowMonth,
+                   crystals: data.crystals || 0,
+                   items5050: data.items5050 || 0,
+                   itemsPeek: data.itemsPeek || 0
                 });
             }
         });
@@ -158,11 +189,15 @@ export default function QuizApp({ user, onBack }) {
             setHistory(histData.sort((a, b) => b.timestamp - a.timestamp));
         });
 
+        if (questMode && forcedTopic) {
+            handleGenerateQuiz(forcedTopic, forcedDifficulty);
+        }
+
         return () => {
             unsubProfile();
             unsubHistory();
         };
-    }, [user]);
+    }, [user, forcedTopic, forcedDifficulty, questMode]);
 
     const handleStart = () => {
         setScore(0);
@@ -171,6 +206,7 @@ export default function QuizApp({ user, onBack }) {
         setFeedback(null);
         setSessionHistory([]);
         setTopic("");
+        setDisabledOptions([]);
         setStep('difficulty');
     };
 
@@ -179,8 +215,8 @@ export default function QuizApp({ user, onBack }) {
         setStep('topic');
     };
 
-    const handleGenerateQuiz = async () => {
-        if (!topic.trim()) return;
+    const handleGenerateQuiz = async (t = topic, d = difficulty) => {
+        if (!t.trim()) return;
         setStep('loading');
         setErrorMsg("");
 
@@ -188,16 +224,16 @@ export default function QuizApp({ user, onBack }) {
             let exclusions = [];
             if (onlyNewQuestions) {
                 exclusions = history
-                    .filter(h => h.topic.toLowerCase() === topic.toLowerCase())
+                    .filter(h => h.topic.toLowerCase() === t.toLowerCase())
                     .map(h => h.question);
             }
 
             let numQuestions = 10;
-            if (difficulty === 'Easy') numQuestions = 5;
-            if (difficulty === 'Medium') numQuestions = 8;
-            if (difficulty === 'Hard') numQuestions = 10;
+            if (d === 'Easy') numQuestions = 5;
+            if (d === 'Medium') numQuestions = 8;
+            if (d === 'Hard') numQuestions = 10;
 
-            const generatedQuestions = await generateQuizWithAI(topic, difficulty, numQuestions, exclusions);
+            const generatedQuestions = await generateQuizWithAI(t, d, numQuestions, exclusions);
             setQuestions(generatedQuestions.slice(0, numQuestions));
             setStep('quiz');
         } catch (err) {
@@ -233,18 +269,27 @@ export default function QuizApp({ user, onBack }) {
 
     const handleNextQuestion = async () => {
         setFeedback(null);
+        setDisabledOptions([]);
         if (currentQIndex < questions.length - 1) {
             setCurrentQIndex(prev => prev + 1);
         } else {
+            if (questMode && onQuestComplete) {
+                onQuestComplete(score, sessionHistory);
+                return;
+            }
+
             setStep('loading');
 
             if (user) {
                 try {
                     const isPerfect = score === questions.length;
                     const earnedXP = (score * 10) + (isPerfect ? 50 : 0);
+                    const earnedCrystals = calculateCrystals(difficulty, score, questions.length);
+                    
                     const profileRef = doc(db, 'users', user.uid);
                     await setDoc(profileRef, { 
                         xp: profile.xp + earnedXP,
+                        crystals: profile.crystals + earnedCrystals,
                         totalQuizzes: (profile.totalQuizzes || 0) + 1
                     }, { merge: true });
 
@@ -258,6 +303,27 @@ export default function QuizApp({ user, onBack }) {
 
             setStep('results');
         }
+    };
+
+    const use5050 = async () => {
+        if (profile.items5050 <= 0 || feedback || disabledOptions.length > 0) return;
+        
+        const currentQ = questions[currentQIndex];
+        const correctIdx = currentQ.correctIndex;
+        const incorrectIndices = [0, 1, 2, 3].filter(i => i !== correctIdx);
+        
+        // Pick 2 random incorrect ones to disable
+        const toDisable = [];
+        while (toDisable.length < 2) {
+            const rand = incorrectIndices[Math.floor(Math.random() * incorrectIndices.length)];
+            if (!toDisable.includes(rand)) toDisable.push(rand);
+        }
+
+        setDisabledOptions(toDisable);
+        
+        // Deduct from Firestore
+        const profileRef = doc(db, 'users', user.uid);
+        await setDoc(profileRef, { items5050: profile.items5050 - 1 }, { merge: true });
     };
 
     const renderHome = () => {
@@ -310,7 +376,7 @@ export default function QuizApp({ user, onBack }) {
                 autoFocus
             />
             <CartoonButton
-                onClick={handleGenerateQuiz}
+                onClick={() => handleGenerateQuiz()}
                 disabled={!topic.trim()}
                 colorClass="bg-cyan-400 w-full"
             >
@@ -344,12 +410,44 @@ export default function QuizApp({ user, onBack }) {
                     <h2 className="text-3xl font-black">{question.question}</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-                    {question.options.map((opt, idx) => (
-                        <button key={idx} onClick={() => handleAnswer(idx)} disabled={feedback !== null} className={`p-6 border-4 border-black rounded-[2rem] text-2xl font-bold shadow-[4px_6px_0px_0px_rgba(0,0,0,1)] ${colors[idx % colors.length]}`}>
-                            {opt}
-                        </button>
-                    ))}
+                    {question.options.map((opt, idx) => {
+                        const isDisabled = disabledOptions.includes(idx);
+                        return (
+                            <button 
+                                key={idx} 
+                                onClick={() => handleAnswer(idx)} 
+                                disabled={feedback !== null || isDisabled} 
+                                className={`p-6 border-4 border-black rounded-[2rem] text-2xl font-bold shadow-[4px_6px_0px_0px_rgba(0,0,0,1)] transition-all ${isDisabled ? 'opacity-0 pointer-events-none' : colors[idx % colors.length]}`}
+                            >
+                                {opt}
+                            </button>
+                        );
+                    })}
                 </div>
+
+                {/* Power-ups Row */}
+                {!feedback && (
+                    <div className="mt-8 flex justify-center gap-4">
+                        <button
+                            onClick={use5050}
+                            disabled={profile.items5050 <= 0 || disabledOptions.length > 0}
+                            className={`p-4 border-4 border-black rounded-2xl font-black flex items-center gap-2 shadow-[2px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none transition-all ${profile.items5050 > 0 ? 'bg-yellow-400' : 'bg-gray-300 grayscale opacity-50'}`}
+                        >
+                            <Sparkles className="w-6 h-6" /> 50/50 ({profile.items5050})
+                        </button>
+                        
+                        {questMode && peekOption && (
+                            <button
+                                onClick={() => alert("The last player picked Answer #" + (Math.floor(Math.random() * 4) + 1))} // Simulated Peek
+                                disabled={profile.itemsPeek <= 0}
+                                className={`p-4 border-4 border-black rounded-2xl font-black flex items-center gap-2 shadow-[2px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none transition-all ${profile.itemsPeek > 0 ? 'bg-cyan-400' : 'bg-gray-300 grayscale opacity-50'}`}
+                            >
+                                <Eye className="w-6 h-6" /> Answer Peek ({profile.itemsPeek})
+                            </button>
+                        )}
+                    </div>
+                )}
+
                 {feedback && (
                     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
                         <div className={`border-8 border-black rounded-[3rem] p-8 max-w-2xl w-full text-center shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] ${feedback.isCorrect ? 'bg-green-300' : 'bg-rose-300'}`}>
@@ -369,12 +467,16 @@ export default function QuizApp({ user, onBack }) {
 
     const renderResults = () => {
         const earnedXP = (score * 10) + (score === questions.length ? 50 : 0);
+        const earnedCrystals = calculateCrystals(difficulty, score, questions.length);
         return (
             <div className="flex flex-col items-center justify-center h-full space-y-6 text-center animate-in zoom-in duration-500 px-4">
                 <h2 className="text-5xl font-black text-white drop-shadow-[0_6px_0_rgba(0,0,0,1)]">Quiz Complete!</h2>
                 <div className="bg-white border-8 border-black rounded-[3rem] p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md">
                     <p className="text-8xl font-black text-purple-600">{score}/{questions.length}</p>
                     <p className="text-2xl font-black text-cyan-800 mt-4">+{earnedXP} XP Earned!</p>
+                    {earnedCrystals > 0 && (
+                        <p className="text-2xl font-black text-orange-500 mt-2">+{earnedCrystals} Crystals! 💎</p>
+                    )}
                 </div>
                 <CartoonButton onClick={() => setStep('home')} colorClass="bg-pink-400 text-3xl"><RefreshCw className="w-10 h-10"/> Finish</CartoonButton>
             </div>

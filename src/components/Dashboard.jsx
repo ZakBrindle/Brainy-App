@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { Play, Settings, Users, BrainCircuit, Trophy, Flame } from 'lucide-react';
+import { Play, Settings, Users, BrainCircuit, Trophy, Flame, Gem, Swords, Map as MapIcon, ShoppingBag } from 'lucide-react';
 import StreakPopup from './StreakPopup';
 
 export default function Dashboard({ user, userRole, profile, onNavigate }) {
@@ -86,21 +86,35 @@ export default function Dashboard({ user, userRole, profile, onNavigate }) {
           <Play className="w-10 h-10 fill-current" /> Play Quiz
         </button>
 
+        <button 
+          onClick={() => onNavigate('questLobby')}
+          className="w-full bg-purple-400 hover:bg-purple-300 border-4 border-black rounded-3xl p-6 flex items-center justify-center gap-4 text-3xl font-black text-black transition-transform active:translate-y-[4px] shadow-[0px_8px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+        >
+          <Swords className="w-10 h-10 fill-current" /> Epic Quest
+        </button>
+
         <div className="grid grid-cols-2 gap-4">
+          <button 
+            onClick={() => onNavigate('shop')}
+            className="bg-yellow-400 hover:bg-yellow-300 border-4 border-black rounded-3xl p-4 flex items-center justify-center gap-2 text-xl font-black transition-transform active:translate-y-[4px] shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+          >
+            <ShoppingBag className="w-6 h-6" /> Shop
+          </button>
+
           <button 
             onClick={() => onNavigate('friends')}
             className="bg-cyan-400 hover:bg-cyan-300 border-4 border-black rounded-3xl p-4 flex items-center justify-center gap-2 text-xl font-black transition-transform active:translate-y-[4px] shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
           >
             <Users className="w-6 h-6" /> Friends
           </button>
-          
-          <button 
-            onClick={() => onNavigate('settings')}
-            className="bg-pink-400 hover:bg-pink-300 border-4 border-black rounded-3xl p-4 flex items-center justify-center gap-2 text-xl font-black transition-transform active:translate-y-[4px] shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
-          >
-            <Settings className="w-6 h-6" /> Settings
-          </button>
         </div>
+
+        <button 
+          onClick={() => onNavigate('settings')}
+          className="w-full bg-pink-400 hover:bg-pink-300 border-4 border-black rounded-3xl p-4 flex items-center justify-center gap-2 text-xl font-black transition-transform active:translate-y-[4px] shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none opacity-80"
+        >
+          <Settings className="w-6 h-6" /> Settings
+        </button>
       </div>
     </div>
   );
