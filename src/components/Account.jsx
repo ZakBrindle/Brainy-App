@@ -12,6 +12,9 @@ export default function Account({ user, userRole, profile, onBack }) {
   };
 
   const currentRank = calculateRank(profile?.xp || 0);
+  
+  const hasChild = profile?.friends?.some(f => f.type === 'child');
+  const displayRole = userRole === 'admin' ? 'Admin' : (userRole === 'parent' && !hasChild ? 'Basic' : userRole);
 
   return (
     <div className="absolute inset-0 bg-blue-500 overflow-y-auto p-4 md:p-8 z-50">
@@ -47,7 +50,7 @@ export default function Account({ user, userRole, profile, onBack }) {
             </div>
             
             <div className="inline-block bg-purple-100 border-4 border-black px-4 py-1 rounded-full font-black text-purple-700 capitalize mb-8">
-                {userRole === 'admin' ? 'Admin' : userRole} Account
+                {displayRole} Account
             </div>
 
             <div className="space-y-4 text-left font-bold">

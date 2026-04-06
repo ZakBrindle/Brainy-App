@@ -352,23 +352,35 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
 
     const renderHome = () => {
         return (
-            <div className="flex flex-col items-center justify-center h-full space-y-8 animate-in fade-in zoom-in duration-500">
+            <div className="flex flex-col items-center justify-center h-full space-y-8 animate-in fade-in zoom-in duration-500 relative w-full">
+                {/* Dynamic Floating Decorations */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    <Star className="absolute top-24 left-[10%] w-16 h-16 text-yellow-300 fill-current animate-bounce" style={{ animationDuration: '2.5s' }} />
+                    <Sparkles className="absolute top-40 right-[15%] w-20 h-20 text-yellow-200 animate-pulse" style={{ animationDuration: '1.5s' }} />
+                    <Brain className="absolute bottom-48 left-[15%] w-20 h-20 text-pink-300 animate-bounce" style={{ animationDuration: '3.5s' }} />
+                    <Trophy className="absolute bottom-32 right-[12%] w-16 h-16 text-orange-300 animate-pulse" style={{ animationDuration: '2s' }} />
+                    <HelpCircle className="absolute top-1/3 left-1/4 w-32 h-32 text-white/20 -rotate-12" />
+                    <HelpCircle className="absolute bottom-1/3 right-1/4 w-48 h-48 text-white/20 rotate-12" />
+                </div>
+
                 <button 
                   onClick={onBack}
                   className="absolute top-4 left-4 bg-white border-4 border-black rounded-2xl px-4 py-2 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-[4px] active:shadow-none mb-6 flex items-center gap-2 z-50"
                 >
                   <ArrowLeft className="w-5 h-5" /> Dashboard
                 </button>
-                <div className="relative mb-6 text-center mt-12">
-                    <h1 className="text-6xl md:text-8xl font-black text-white drop-shadow-[0_8px_0_rgba(0,0,0,1)] rotate-[-2deg] animate-bounce">
+                <div className="relative mb-6 text-center mt-12 z-10">
+                    <h1 className="text-6xl md:text-8xl font-black text-white drop-shadow-[0_8px_0_rgba(0,0,0,1)] rotate-[-2deg] animate-bounce" style={{ animationDuration: '2s' }}>
                         Magic Quiz <br /> Adventure!
                     </h1>
                 </div>
 
-                <CartoonButton onClick={handleStart} colorClass="bg-green-400 hover:bg-green-300 text-3xl px-12 py-6">
-                    <Play className="w-10 h-10 fill-current" />
-                    Start Quiz
-                </CartoonButton>
+                <div className="z-10">
+                    <CartoonButton onClick={handleStart} colorClass="bg-green-400 hover:bg-green-300 text-3xl px-12 py-6">
+                        <Play className="w-10 h-10 fill-current" />
+                        Start Quiz
+                    </CartoonButton>
+                </div>
             </div>
         );
     };

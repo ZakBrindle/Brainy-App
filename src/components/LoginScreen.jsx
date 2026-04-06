@@ -128,18 +128,18 @@ export default function LoginScreen({ onLogin }) {
             <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-pink-400 border-4 border-black px-4 py-1 rounded-full font-black text-xl">
               Kids
             </div>
-            <form onSubmit={handleCodeLogin} className="flex gap-2">
+            <form onSubmit={handleCodeLogin} className="flex flex-col sm:flex-row gap-3">
               <input 
                 type="text" 
                 value={code}
                 onChange={e => setCode(e.target.value.toUpperCase())}
-                placeholder="ENTER MAGICAL CODE" 
-                className="flex-1 border-4 border-black rounded-2xl p-3 font-black text-xl md:text-2xl text-center uppercase focus:outline-none focus:ring-4 ring-pink-400"
+                placeholder="MAGIC CODE" 
+                className="flex-1 min-w-0 border-4 border-black rounded-2xl p-3 font-black text-xl md:text-2xl text-center uppercase focus:outline-none focus:ring-4 ring-pink-400"
               />
               <button 
                 type="submit"
                 disabled={loading}
-                className="bg-yellow-400 border-4 border-black rounded-2xl p-4 hover:bg-yellow-300 active:translate-y-[2px] transition-all disabled:opacity-50"
+                className="bg-yellow-400 border-4 border-black rounded-2xl p-4 hover:bg-yellow-300 active:translate-y-[2px] transition-all disabled:opacity-50 flex items-center justify-center shrink-0"
               >
                 <Key className="w-8 h-8" />
               </button>

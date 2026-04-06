@@ -351,7 +351,7 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
                     <ArrowLeft className="w-5 h-5" /> Leave Party
                 </button>
 
-                <div className="bg-white border-8 border-black rounded-[3rem] p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] text-center relative">
+                <div className="bg-white border-8 border-black rounded-[3rem] p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] text-center relative mt-16">
                     <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-yellow-400 border-4 border-black p-4 rounded-3xl font-black text-2xl uppercase">
                         CODE: {currentQuest.id}
                     </div>
@@ -423,10 +423,10 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
                 </div>
 
                 {/* Footer Controls */}
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t-4 border-black z-50 flex gap-4">
+                <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 bg-white/95 backdrop-blur-md border-t-4 border-black z-50 flex gap-3">
                    <button 
                      onClick={toggleReady}
-                     className={`flex-1 p-6 border-4 border-black rounded-[2rem] font-black text-2xl shadow-[0px_8px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[8px] transition-all ${isReady ? 'bg-orange-400 text-white' : 'bg-yellow-400'}`}
+                     className={`flex-1 py-4 px-2 sm:p-6 border-4 border-black rounded-2xl sm:rounded-[2rem] font-black text-xl sm:text-2xl shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[6px] transition-all ${isReady ? 'bg-orange-400 text-white' : 'bg-yellow-400'}`}
                    >
                      {isReady ? 'Unready?' : 'READY UP!'}
                    </button>
@@ -435,7 +435,7 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
                      <button 
                         onClick={startGame}
                         disabled={!currentQuest.players.every(p => p.ready) || currentQuest.players.length < 1}
-                        className={`flex-1 p-6 border-4 border-black rounded-[2rem] font-black text-2xl shadow-[0px_8px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[8px] transition-all ${currentQuest.players.every(p => p.ready) ? 'bg-green-400 active:bg-green-300' : 'bg-gray-200 grayscale opacity-50 cursor-not-allowed'}`}
+                        className={`flex-1 py-4 px-2 sm:p-6 border-4 border-black rounded-2xl sm:rounded-[2rem] font-black text-xl sm:text-2xl shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[6px] transition-all ${currentQuest.players.every(p => p.ready) ? 'bg-green-400 active:bg-green-300' : 'bg-gray-200 grayscale opacity-50 cursor-not-allowed'}`}
                      >
                        START GAME! ⚔️
                      </button>

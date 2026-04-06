@@ -81,6 +81,9 @@ export default function Dashboard({ user, userRole, profile, onNavigate }) {
      return () => unsub();
   }, [profile?.friends, profile?.parentUid, user.uid]);
 
+  const hasChild = profile?.friends?.some(f => f.type === 'child');
+  const displayRole = userRole === 'admin' ? 'Admin' : (userRole === 'parent' && !hasChild ? 'Basic' : userRole);
+
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-8 animate-in fade-in zoom-in duration-500 max-w-lg mx-auto px-4 relative">
       {streakData.showPopup && (
@@ -128,7 +131,7 @@ export default function Dashboard({ user, userRole, profile, onNavigate }) {
           onClick={() => onNavigate('account')}
           className="inline-block bg-purple-100 hover:bg-purple-200 border-4 border-black px-6 py-2 rounded-full font-black text-purple-700 capitalize mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[4px] transition-all"
         >
-          {userRole === 'admin' ? 'Admin' : userRole} Account
+          {displayRole} Account
         </button>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
