@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../lib/firebase';
-import { doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, updateDoc, onSnapshot } from 'firebase/firestore';
 import { Settings, UserPlus, Save, CheckCircle, ArrowLeft, ShieldAlert, Check, X } from 'lucide-react';
 import AdminPanel from './AdminPanel';
 
@@ -17,7 +17,6 @@ export default function SettingsScreen({ user, userRole, profile, onBack }) {
     if (userRole === 'parent') {
       loadParentSettings();
       
-      const { onSnapshot } = require('firebase/firestore');
       const q = query(collection(db, 'users'), where('parentUid', '==', user.uid));
       const unsub = onSnapshot(q, (snap) => {
           const stats = [];
