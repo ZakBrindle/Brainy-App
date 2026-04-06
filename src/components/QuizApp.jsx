@@ -3,7 +3,7 @@ import { Play, Star, HelpCircle, Check, X, Sparkles, Brain, Trophy, ArrowRight, 
 import { doc, getDoc, setDoc, collection, onSnapshot, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-const apiKey = import.meta.env.VITE_FIREBASE_API_KEY || ""; // Fallback
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_FIREBASE_API_KEY || ""; // Fallback
 const appId = import.meta.env.VITE_FIREBASE_APP_ID || "default-app-id";
 
 // --- Game Logic & Constants ---

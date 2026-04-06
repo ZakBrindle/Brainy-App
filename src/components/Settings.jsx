@@ -60,6 +60,33 @@ export default function SettingsScreen({ user, userRole, onBack }) {
     }
   };
 
+  const regenerateCode = async (childId, childName) => {
+    setLoading(true);
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    try {
+      await addDoc(collection(db, 'loginCodes'), {
+        code,
+        parentUid: user.uid,
+        childId,
+        childName,
+        createdAt: new Date().toISOString()
+      });
+
+      const docRef = doc(db, 'users', user.uid);
+      const newChildren = childrenList.map(c => c.id === childId ? { ...c, activeCode: code } : c);
+      await updateDoc(docRef, { children: newChildren });
+      
+      setChildrenList(newChildren);
+      setGeneratedCode(code);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to regenerate code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleShareFriends = async () => {
     const newVal = !shareFriends;
     setShareFriends(newVal);
@@ -105,7 +132,7 @@ export default function SettingsScreen({ user, userRole, onBack }) {
                 <div className="bg-yellow-200 border-4 border-black p-4 rounded-xl text-center mb-6">
                   <p className="font-bold">Here is the Magic Login Code:</p>
                   <p className="text-4xl font-black tracking-widest text-black my-2">{generatedCode}</p>
-                  <p className="text-sm">Write this down! They will need it to play.</p>
+                  <p className="text-sm">Write this down! They will need it to play. Valid for 60 minutes.</p>
                 </div>
               )}
 
@@ -114,9 +141,18 @@ export default function SettingsScreen({ user, userRole, onBack }) {
                   <h4 className="font-black text-lg mb-2">Your Children</h4>
                   <ul className="space-y-2">
                     {childrenList.map(c => (
-                      <li key={c.id} className="bg-white border-2 border-black p-3 rounded-lg flex justify-between font-bold">
+                      <li key={c.id} className="bg-white border-2 border-black p-3 rounded-lg flex justify-between items-center font-bold">
                         <span>{c.name}</span>
-                        <span className="text-gray-500 font-mono">{c.activeCode}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-gray-500 font-mono">{c.activeCode}</span>
+                          <button
+                            onClick={() => regenerateCode(c.id, c.name)}
+                            disabled={loading}
+                            className="bg-yellow-400 border-2 border-black rounded-lg px-3 py-1 text-sm font-black hover:bg-yellow-300 disabled:opacity-50"
+                          >
+                            New Code
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>

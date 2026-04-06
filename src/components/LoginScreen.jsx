@@ -52,6 +52,16 @@ export default function LoginScreen({ onLogin }) {
       
       const codeData = querySnapshot.docs[0].data();
       
+      const createdAt = new Date(codeData.createdAt).getTime();
+      const now = new Date().getTime();
+      const ageInMinutes = (now - createdAt) / (1000 * 60);
+      
+      if (ageInMinutes > 60) {
+        setError('This code has expired. Please ask your parent for a new one!');
+        setLoading(false);
+        return;
+      }
+      
       // Sign in anonymously for child session
       const { user } = await signInAnonymously(auth);
       

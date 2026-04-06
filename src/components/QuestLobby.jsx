@@ -25,8 +25,8 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
         // For simplicity, we'll listen to a "public" or "friends-only" global quests list,
         // or just rely on Join Code / Direct Friend Invitation.
         // Let's implement "Friend's active quests" by searching for games where hostUid is in my friends list.
-        const friendUids = (profile.friends || []).map(f => f.uid);
-        if (profile.parentUid) friendUids.push(profile.parentUid);
+        const friendUids = (profile?.friends || []).map(f => f.uid);
+        if (profile?.parentUid) friendUids.push(profile.parentUid);
 
         // Fetching active quests from friends
         // Note: Real-time query across all friends might be slow, so we'll start with Join Code for now
@@ -41,12 +41,12 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
         const questData = {
             id: code,
             hostUid: user.uid,
-            hostName: profile.displayName,
+            hostName: profile?.displayName || 'Hero',
             status: 'lobby',
             settings: config,
             players: [{
                 uid: user.uid,
-                name: profile.displayName,
+                name: profile?.displayName || 'Hero',
                 ready: false,
                 score: 0,
                 currentLevel: 0,
@@ -100,7 +100,7 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
 
             const newPlayer = {
                 uid: user.uid,
-                name: profile.displayName,
+                name: profile?.displayName || 'Hero',
                 ready: false,
                 score: 0,
                 currentLevel: 0,
