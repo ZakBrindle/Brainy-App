@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, updateDoc } from 'firebase/firestore';
-import { Settings, UserPlus, Save, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Settings, UserPlus, Save, CheckCircle, ArrowLeft, ShieldAlert } from 'lucide-react';
+import AdminPanel from './AdminPanel';
 
 export default function SettingsScreen({ user, userRole, onBack }) {
   const [childrenList, setChildrenList] = useState([]);
@@ -9,6 +10,7 @@ export default function SettingsScreen({ user, userRole, onBack }) {
   const [generatedCode, setGeneratedCode] = useState(null);
   const [shareFriends, setShareFriends] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
     if (userRole === 'parent') {
@@ -93,6 +95,10 @@ export default function SettingsScreen({ user, userRole, onBack }) {
     await updateDoc(doc(db, 'users', user.uid), { shareFriends: newVal });
   };
 
+  if (showAdmin) {
+      return <AdminPanel onBack={() => setShowAdmin(false)} />;
+  }
+
   return (
     <div className="absolute inset-0 bg-blue-500 overflow-y-auto p-4 md:p-8 z-50">
       <button 
@@ -107,6 +113,21 @@ export default function SettingsScreen({ user, userRole, onBack }) {
           <Settings className="w-10 h-10 text-purple-500" />
           Settings
         </h2>
+
+        {user?.email === 'z4kbrindle@gmail.com' && (
+           <div className="border-4 border-black p-6 rounded-3xl bg-slate-800 text-white flex flex-col md:flex-row justify-between items-center mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] gap-4">
+               <div>
+                   <h3 className="text-2xl font-black flex items-center gap-2"><ShieldAlert className="text-yellow-400" /> Admin Controls</h3>
+                   <p className="font-bold text-slate-300">Access user usage stats and configure AI model fallbacks.</p>
+               </div>
+               <button 
+                  onClick={() => setShowAdmin(true)}
+                  className="bg-yellow-400 text-black font-black border-4 border-black px-6 py-3 rounded-xl hover:bg-yellow-300 active:translate-y-[2px]"
+               >
+                   Open Admin Panel
+               </button>
+           </div>
+        )}
 
         {userRole === 'parent' ? (
           <div className="space-y-8">

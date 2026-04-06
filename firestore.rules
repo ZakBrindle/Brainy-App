@@ -19,6 +19,11 @@ service cloud.firestore {
       }
     }
 
+    match /config/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.token.email == 'z4kbrindle@gmail.com';
+    }
+
     // Login codes: Anyone can read a code to join/link, 
     // but only signed-in users (parents) can create them.
     match /loginCodes/{codeId} {

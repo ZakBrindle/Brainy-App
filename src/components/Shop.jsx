@@ -30,12 +30,12 @@ export default function Shop({ user, profile, onBack }) {
     const [status, setStatus] = useState(null); // { type: 'success' | 'error', message: '' }
 
     const buyItem = async (item) => {
-        if (profile.crystals < item.price) {
+        if ((profile?.crystals || 0) < item.price) {
             setStatus({ type: 'error', message: "Not enough Crystals! Go play some quizzes! 💎" });
             return;
         }
 
-        const currentCount = profile[item.id] || 0;
+        const currentCount = profile?.[item.id] || 0;
         if (currentCount >= item.max) {
             setStatus({ type: 'error', message: `You already have the max (${item.max}) of these!` });
             return;
@@ -44,7 +44,7 @@ export default function Shop({ user, profile, onBack }) {
         try {
             const userRef = doc(db, 'users', user.uid);
             await updateDoc(userRef, {
-                crystals: profile.crystals - item.price,
+                crystals: (profile?.crystals || 0) - item.price,
                 [item.id]: currentCount + 1
             });
             setStatus({ type: 'success', message: `Yay! You got a ${item.name}! 🎉` });
@@ -68,7 +68,7 @@ export default function Shop({ user, profile, onBack }) {
                     <ShoppingBag className="w-20 h-20 text-pink-500 mx-auto mb-4" />
                     <h2 className="text-5xl font-black text-black mb-2">Magic Shop</h2>
                     <div className="inline-flex items-center gap-3 bg-blue-100 border-4 border-black px-6 py-2 rounded-full font-black text-2xl text-blue-600">
-                        <Gem className="w-8 h-8" /> {profile.crystals} Crystals
+                        <Gem className="w-8 h-8" /> {profile?.crystals || 0} Crystals
                     </div>
                 </div>
 
@@ -82,7 +82,7 @@ export default function Shop({ user, profile, onBack }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {SHOP_ITEMS.map((item) => {
-                        const count = profile[item.id] || 0;
+                        const count = profile?.[item.id] || 0;
                         const isMax = count >= item.max;
                         
                         return (
@@ -101,8 +101,8 @@ export default function Shop({ user, profile, onBack }) {
                                     
                                     <button
                                         onClick={() => buyItem(item)}
-                                        disabled={isMax || profile.crystals < item.price}
-                                        className={`w-full p-4 border-4 border-black rounded-2xl font-black text-2xl flex items-center justify-center gap-3 shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[6px] transition-all ${isMax || profile.crystals < item.price ? 'bg-gray-200 grayscale opacity-50' : 'bg-green-400 hover:bg-green-300'}`}
+                                        disabled={isMax || (profile?.crystals || 0) < item.price}
+                                        className={`w-full p-4 border-4 border-black rounded-2xl font-black text-2xl flex items-center justify-center gap-3 shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[6px] transition-all ${isMax || (profile?.crystals || 0) < item.price ? 'bg-gray-200 grayscale opacity-50' : 'bg-green-400 hover:bg-green-300'}`}
                                     >
                                         <Gem className="w-6 h-6" /> {item.price}
                                     </button>

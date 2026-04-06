@@ -20,10 +20,19 @@ export default function Dashboard({ user, userRole, profile, onNavigate }) {
       const today = new Date().toISOString().slice(0, 10);
       const lastLogin = data.lastLogin || '';
       let newCount = data.streakCount || 1;
+      let sessionCount = data.totalSessions || 0;
       let showPopup = false;
+      let needsUpdate = false;
+
+      if (!sessionStorage.getItem('sessionTracked')) {
+          sessionCount += 1;
+          sessionStorage.setItem('sessionTracked', 'true');
+          needsUpdate = true;
+      }
 
       if (lastLogin !== today) {
         showPopup = true;
+        needsUpdate = true;
         // Check if last login was yesterday
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
@@ -34,10 +43,13 @@ export default function Dashboard({ user, userRole, profile, onNavigate }) {
         } else {
           newCount = 1; // reset streak
         }
+      }
 
+      if (needsUpdate) {
         await updateDoc(userRef, {
           lastLogin: today,
-          streakCount: newCount
+          streakCount: newCount,
+          totalSessions: sessionCount
         });
       }
       

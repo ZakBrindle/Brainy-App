@@ -36,8 +36,9 @@ const getRankInfo = (xp) => {
     return { currentRank, nextRank, xpNeeded, progress };
 };
 
-const generateQuizWithAI = async (topic, difficulty, numQuestions, previousQuestions = []) => {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+const generateQuizWithAI = async (topic, difficulty, numQuestions, previousQuestions = [], aiModels = [""]) => {
+    const validModels = aiModels.filter(m => m && m.trim().length > 0);
+    if (validModels.length === 0) validModels.push("gemini-2.5-flash-preview-09-2025");
 
     const systemInstruction = `You are a fun, cheerful, and educational quiz generator for children. Generate exactly ${numQuestions} multiple-choice questions about the given topic.`;
 
@@ -76,28 +77,41 @@ const generateQuizWithAI = async (topic, difficulty, numQuestions, previousQuest
         generationConfig: { responseMimeType: "application/json" }
     };
 
-    const delays = [1000, 2000, 4000, 8000, 16000];
-    for (let attempt = 0; attempt <= delays.length; attempt++) {
+    let lastError = null;
+
+    for (let i = 0; i < validModels.length; i++) {
+        const modelName = validModels[i].trim();
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status} from model ${modelName}`);
+            
             const data = await response.json();
             const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!textResponse) throw new Error("Invalid response structure from AI");
+            
             const parsedData = JSON.parse(textResponse);
             if (!parsedData.questions || !Array.isArray(parsedData.questions) || parsedData.questions.length === 0) {
                 throw new Error("Missing questions array in JSON");
             }
             return parsedData.questions;
         } catch (error) {
-            if (attempt === delays.length) throw new Error("Failed to generate quiz after multiple attempts.");
-            await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+            console.warn(`Model ${modelName} failed:`, error);
+            lastError = error;
+            // Short delay before trying the next fallback
+            if (i < validModels.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
         }
     }
+
+    throw lastError || new Error("All configured models failed.");
 };
 
 const calculateCrystals = (difficulty, score, total) => {
@@ -162,6 +176,7 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
     });
     const [history, setHistory] = useState([]);
     const [disabledOptions, setDisabledOptions] = useState([]);
+    const [aiModels, setAiModels] = useState(["", "", ""]);
 
     useEffect(() => {
         if (!user) return;
@@ -189,6 +204,14 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
             setHistory(histData.sort((a, b) => b.timestamp - a.timestamp));
         });
 
+        const configRef = doc(db, 'config', 'gemini');
+        const unsubConfig = onSnapshot(configRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                setAiModels([data.model1 || "", data.model2 || "", data.model3 || ""]);
+            }
+        });
+
         if (questMode && forcedTopic) {
             handleGenerateQuiz(forcedTopic, forcedDifficulty);
         }
@@ -196,6 +219,7 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
         return () => {
             unsubProfile();
             unsubHistory();
+            unsubConfig();
         };
     }, [user, forcedTopic, forcedDifficulty, questMode]);
 
@@ -233,7 +257,7 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
             if (d === 'Medium') numQuestions = 8;
             if (d === 'Hard') numQuestions = 10;
 
-            const generatedQuestions = await generateQuizWithAI(t, d, numQuestions, exclusions);
+            const generatedQuestions = await generateQuizWithAI(t, d, numQuestions, exclusions, aiModels);
             setQuestions(generatedQuestions.slice(0, numQuestions));
             setStep('quiz');
         } catch (err) {

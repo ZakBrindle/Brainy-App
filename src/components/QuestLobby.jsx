@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
 import { collection, doc, setDoc, updateDoc, arrayUnion, onSnapshot, getDoc, query, where, getDocs, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { Users, Play, Plus, ArrowLeft, CheckCircle2, XCircle, Settings, Swords, Sparkles, Map as MapIcon, Loader2, Key } from 'lucide-react';
+import { getTopicsForDifficulty, shuffleArray } from '../lib/topics';
 
 export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
     const [activeQuests, setActiveQuests] = useState([]);
@@ -15,7 +16,8 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
     // Settings for new quest
     const [config, setConfig] = useState({
         difficulty: 'Easy',
-        selectTopicsBefore: false
+        selectTopicsBefore: false,
+        suggestTopics: false
     });
 
     useEffect(() => {
@@ -54,8 +56,13 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
             }],
             currentRoundIndex: 0,
             playerOrder: [],
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp(),
+            shuffledTopics: config.suggestTopics ? shuffleArray(getTopicsForDifficulty(config.difficulty)) : []
         };
+        
+        if (config.suggestTopics) {
+            questData.settings.selectTopicsBefore = true; // Implicitly enable selecting topics
+        }
 
         try {
             await setDoc(doc(db, 'quests', newQuestId), questData);
@@ -178,6 +185,10 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
                 currentTurnPlayerUid: shuffled[0],
                 currentTurnStartedAt: serverTimestamp()
             });
+            
+            await updateDoc(doc(db, 'users', user.uid), {
+                totalQuestsStarted: (profile?.totalQuestsStarted || 0) + 1
+            });
         } catch (e) {
             console.error(e);
             alert("Failed to start game.");
@@ -238,6 +249,15 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
                                 className="w-6 h-6 accent-purple-500"
                             />
                         </label>
+                        <label className="flex items-center justify-between bg-white border-2 border-black p-3 rounded-xl font-bold cursor-pointer">
+                            <span>Suggest Topics?</span>
+                            <input 
+                                type="checkbox" 
+                                checked={config.suggestTopics} 
+                                onChange={e => setConfig({...config, suggestTopics: e.target.checked})}
+                                className="w-6 h-6 accent-purple-500"
+                            />
+                        </label>
                     </div>
                     <button 
                         onClick={createQuest}
@@ -276,8 +296,12 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
 
     const renderLobby = () => {
         const isHost = currentQuest?.hostUid === user.uid;
-        const myPlayer = currentQuest?.players.find(p => p.uid === user.uid);
+        const myPlayerIndex = currentQuest?.players.findIndex(p => p.uid === user.uid) || 0;
+        const myPlayer = currentQuest?.players[myPlayerIndex];
         const isReady = myPlayer?.ready;
+        const suggestedTopics = currentQuest?.settings.suggestTopics && currentQuest?.shuffledTopics
+             ? currentQuest.shuffledTopics.slice(myPlayerIndex * 4, myPlayerIndex * 4 + 4)
+             : [];
 
         return (
             <div className="space-y-8 animate-in slide-in-from-right-8 max-w-2xl mx-auto w-full px-4 pt-12 pb-20">
@@ -316,6 +340,31 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
                                 />
                             ))}
                         </div>
+                        {suggestedTopics.length > 0 && (
+                            <div className="mt-4 border-t-2 border-cyan-300 pt-4">
+                                <span className="font-black text-slate-600 block mb-2">Suggested (Click to add):</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {suggestedTopics.map(t => (
+                                        <button 
+                                           key={t}
+                                           onClick={() => {
+                                               if (isReady) return;
+                                               const next = [...topics];
+                                               const emptyIdx = next.findIndex(x => x.trim() === '');
+                                               if (emptyIdx !== -1) {
+                                                   next[emptyIdx] = t;
+                                                   setTopics(next);
+                                               }
+                                           }}
+                                           disabled={isReady}
+                                           className="bg-yellow-100 hover:bg-yellow-200 border-2 border-black rounded-lg px-3 py-1 font-bold text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px]"
+                                        >
+                                           {t}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
