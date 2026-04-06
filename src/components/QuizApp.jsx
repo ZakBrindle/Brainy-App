@@ -183,7 +183,7 @@ const CartoonButton = ({ children, onClick, colorClass = "bg-yellow-400 hover:bg
     </button>
 );
 
-export default function QuizApp({ user, onBack, questMode = false, difficulty: forcedDifficulty = '', forcedTopic = '', onQuestComplete, peekOption = false }) {
+export default function QuizApp({ user, onBack, questMode = false, difficulty: forcedDifficulty = '', forcedTopic = '', onQuestComplete, peekOption = false, masteryMode = false }) {
     const [step, setStep] = useState(questMode ? 'loading' : 'home');
     const [difficulty, setDifficulty] = useState(forcedDifficulty);
     const [topic, setTopic] = useState(forcedTopic);

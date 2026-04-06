@@ -12,6 +12,13 @@ export default function SettingsScreen({ user, userRole, profile, onBack }) {
   const [shareFriends, setShareFriends] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [editName, setEditName] = useState('');
+
+  useEffect(() => {
+      if (profile?.displayName || profile?.name) {
+          setEditName(profile.displayName || profile.name);
+      }
+  }, [profile]);
 
   useEffect(() => {
     if (userRole === 'parent') {
@@ -26,6 +33,22 @@ export default function SettingsScreen({ user, userRole, profile, onBack }) {
       return () => unsub();
     }
   }, [userRole, user.uid]);
+
+  const updateDisplayName = async () => {
+      if (!editName.trim()) return;
+      setLoading(true);
+      try {
+          await updateDoc(doc(db, 'users', user.uid), {
+             displayName: editName.trim()
+          });
+          alert("Display name updated!");
+      } catch (e) {
+          console.error(e);
+          alert("Failed to update name");
+      } finally {
+          setLoading(false);
+      }
+  };
 
   const loadParentSettings = async () => {
     const docRef = doc(db, 'users', user.uid);
@@ -157,6 +180,28 @@ export default function SettingsScreen({ user, userRole, profile, onBack }) {
           <Settings className="w-10 h-10 text-purple-500" />
           Settings
         </h2>
+
+        {/* Display Name Edit */}
+        <div className="border-4 border-black p-6 rounded-3xl bg-blue-50 mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <h3 className="text-xl font-black text-blue-800 mb-3">Display Name</h3>
+            <div className="flex items-center gap-3">
+                <input 
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    placeholder="Enter new name"
+                    className="flex-1 min-w-0 border-4 border-black rounded-xl p-3 font-bold focus:outline-none focus:ring-4 focus:ring-blue-300"
+                />
+                <button 
+                    onClick={updateDisplayName}
+                    disabled={loading || editName === (profile?.displayName || profile?.name)}
+                    className="bg-green-400 border-4 border-black p-3 rounded-xl hover:bg-green-300 disabled:opacity-50 shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px] transition-all"
+                    title="Save Name"
+                >
+                    <Save className="w-6 h-6" />
+                </button>
+            </div>
+            <p className="text-sm font-bold text-gray-500 mt-2">This is the name your friends will see on the Leaderboard!</p>
+        </div>
 
         {user?.email === 'z4kbrindle@gmail.com' && (
            <div className="border-4 border-black p-6 rounded-3xl bg-slate-800 text-white flex flex-col md:flex-row justify-between items-center mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] gap-4">
