@@ -221,7 +221,7 @@ export default function SettingsScreen({ user, userRole, profile, onBack }) {
                         <li key={c.id} className="bg-white border-4 border-black p-4 rounded-2xl flex flex-col gap-3 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                           <div className="flex justify-between items-center bg-cyan-100 p-2 rounded-xl border-2 border-black">
                             <span className="text-xl font-black">{c.name}</span>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
                               <span className="text-slate-600 font-mono tracking-widest bg-white px-2 py-1 border-2 border-black rounded-md">{c.activeCode}</span>
                               <button
                                 onClick={() => regenerateCode(c.id, c.name)}
@@ -229,6 +229,29 @@ export default function SettingsScreen({ user, userRole, profile, onBack }) {
                                 className="bg-yellow-400 border-2 border-black rounded-lg px-3 py-1 text-sm font-black hover:bg-yellow-300 disabled:opacity-50 active:translate-y-[2px]"
                               >
                                 New Code
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (!window.confirm("Are you sure you want to delete this child profile?")) return;
+                                  setLoading(true);
+                                  try {
+                                    const { updateDoc } = await import('firebase/firestore');
+                                    const newChildren = childrenList.filter(child => child.id !== c.id);
+                                    await updateDoc(doc(db, 'users', user.uid), { children: newChildren });
+                                    setChildrenList(newChildren);
+                                    setGeneratedCode(null);
+                                  } catch (e) {
+                                    console.error(e);
+                                    alert('Failed to remove child.');
+                                  } finally {
+                                    setLoading(false);
+                                  }
+                                }}
+                                disabled={loading}
+                                className="bg-red-400 border-2 border-black rounded-lg p-1 font-black hover:bg-red-300 disabled:opacity-50 active:translate-y-[2px] text-white"
+                                title="Delete Profile"
+                              >
+                                <X className="w-5 h-5" />
                               </button>
                             </div>
                           </div>
