@@ -134,19 +134,67 @@ export default function Dashboard({ user, userRole, profile, onNavigate }) {
           {displayRole} Account
         </button>
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-orange-100 border-4 border-black rounded-2xl p-4 flex flex-col items-center justify-center">
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="bg-orange-100 border-4 border-black rounded-2xl p-4 flex flex-col items-center justify-center relative cursor-pointer active:scale-95 transition-transform" onClick={() => setStreakData({ ...streakData, showPopup: true })}>
             <Flame className="w-8 h-8 text-orange-500 mb-2" />
-            <span className="text-3xl font-black text-black">{streakData.count}</span>
-            <span className="font-bold text-gray-500 text-sm">Day Streak</span>
+            <span className="text-2xl font-black text-black">{streakData.count}</span>
+            <span className="font-bold text-gray-500 text-xs text-center leading-tight mt-1">Day<br/>Streak</span>
           </div>
           
           <div className="bg-yellow-100 border-4 border-black rounded-2xl p-4 flex flex-col items-center justify-center">
             <Trophy className="w-8 h-8 text-yellow-500 mb-2" />
-            <span className="text-3xl font-black text-black">{profile?.xp || 0}</span>
-            <span className="font-bold text-gray-500 text-sm">Total XP</span>
+            <span className="text-2xl font-black text-black">{profile?.xp || 0}</span>
+            <span className="font-bold text-gray-500 text-xs text-center leading-tight mt-1">Total<br/>XP</span>
+          </div>
+
+          <div 
+            className="bg-blue-100 border-4 border-black rounded-2xl p-4 flex flex-col items-center justify-center relative shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[2px] cursor-pointer transition-all"
+            onClick={() => setStreakData({ ...streakData, showBreakdown: true })}
+          >
+            <Flame className="w-8 h-8 text-blue-500 mb-2 drop-shadow-[0_2px_0_rgba(255,255,255,1)]" />
+            <span className="text-2xl font-black text-blue-700">{profile?.maxQuizStreak || 0}</span>
+            <span className="font-bold text-gray-500 text-xs text-center leading-tight mt-1">100%<br/>Streak</span>
           </div>
         </div>
+
+        {streakData.showBreakdown && (
+            <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="bg-white border-8 border-black rounded-[3rem] p-8 w-full max-w-sm shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] animate-in zoom-in duration-300 relative">
+                    <button 
+                        onClick={() => setStreakData({ ...streakData, showBreakdown: false })}
+                        className="absolute -top-4 -right-4 bg-red-400 border-4 border-black w-12 h-12 rounded-full font-black text-2xl flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-[4px] active:shadow-none"
+                    >
+                        X
+                    </button>
+                    <h3 className="text-3xl font-black text-center mb-6 text-blue-600">Quiz Streaks!</h3>
+                    <p className="font-bold text-gray-500 text-center mb-6">Your highest completely perfect scores in a row.</p>
+                    
+                    <div className="space-y-4">
+                        <div className="bg-green-100 border-4 border-black rounded-2xl p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Flame className="w-8 h-8 text-green-500" />
+                                <span className="font-black text-xl">Easy</span>
+                            </div>
+                            <span className="text-3xl font-black text-green-700">{profile?.maxEasyStreak || 0}</span>
+                        </div>
+                        <div className="bg-orange-100 border-4 border-black rounded-2xl p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Flame className="w-8 h-8 text-orange-500" />
+                                <span className="font-black text-xl">Medium</span>
+                            </div>
+                            <span className="text-3xl font-black text-orange-700">{profile?.maxMediumStreak || 0}</span>
+                        </div>
+                        <div className="bg-red-100 border-4 border-black rounded-2xl p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Flame className="w-8 h-8 text-red-500" />
+                                <span className="font-black text-xl">Hard</span>
+                            </div>
+                            <span className="text-3xl font-black text-red-700">{profile?.maxHardStreak || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
 
       </div>
 
@@ -165,17 +213,24 @@ export default function Dashboard({ user, userRole, profile, onNavigate }) {
           <Swords className="w-10 h-10 fill-current" /> Epic Quest
         </button>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <button 
             onClick={() => onNavigate('shop')}
-            className="bg-yellow-400 hover:bg-yellow-300 border-4 border-black rounded-3xl p-4 flex items-center justify-center gap-2 text-xl font-black transition-transform active:translate-y-[4px] shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+            className="bg-yellow-400 hover:bg-yellow-300 border-4 border-black rounded-3xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-sm sm:text-xl font-black transition-transform active:translate-y-[4px] shadow-[0px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
           >
             <ShoppingBag className="w-6 h-6" /> Shop
           </button>
 
           <button 
+            onClick={() => onNavigate('leaderboard')}
+            className="bg-blue-400 hover:bg-blue-300 border-4 border-black rounded-3xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-sm sm:text-xl font-black transition-transform active:translate-y-[4px] shadow-[0px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+          >
+            <Trophy className="w-6 h-6" /> Ranks
+          </button>
+
+          <button 
             onClick={() => onNavigate('friends')}
-            className="bg-cyan-400 hover:bg-cyan-300 border-4 border-black rounded-3xl p-4 flex items-center justify-center gap-2 text-xl font-black transition-transform active:translate-y-[4px] shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+            className="bg-cyan-400 hover:bg-cyan-300 border-4 border-black rounded-3xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-sm sm:text-xl font-black transition-transform active:translate-y-[4px] shadow-[0px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
           >
             <Users className="w-6 h-6" /> Friends
           </button>

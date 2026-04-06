@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
-import { doc, updateDoc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, serverTimestamp, setDoc, writeBatch, increment } from 'firebase/firestore';
 import { Swords, Trophy, Clock, ArrowRight, User, AlertCircle, Eye, Sparkles, Gem, Castle } from 'lucide-react';
 import QuestMap from './QuestMap';
 import QuizApp from './QuizApp';
@@ -119,6 +119,22 @@ export default function QuestGameLoop({ user, profile, questId, initialQuest, on
                 updates.currentRoundIndex = quest.currentRoundIndex + 1;
                 if (updates.currentRoundIndex >= 10) {
                     updates.status = 'finished';
+                    // Determine champions
+                    const maxScore = Math.max(...newPlayers.map(p => p.score));
+                    const winners = newPlayers.filter(p => p.score === maxScore).map(p => p.uid);
+                    updates.winners = winners;
+                    
+                    const batch = writeBatch(db);
+                    batch.update(questRef, updates);
+                    winners.forEach(uid => {
+                        batch.update(doc(db, 'users', uid), { questChampionCount: increment(1) });
+                    });
+                    await batch.commit();
+                    
+                    setRoundResults({ score, total: 10 });
+                    setView('roundSummary');
+                    setIsLoading(false);
+                    return;
                 }
             }
 

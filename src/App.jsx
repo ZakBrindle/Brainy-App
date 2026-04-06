@@ -12,6 +12,7 @@ import QuizApp from './components/QuizApp';
 import ShopScreen from './components/Shop';
 import QuestLobby from './components/QuestLobby';
 import QuestGameLoop from './components/QuestGameLoop';
+import LeaderboardScreen from './components/Leaderboard';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -128,6 +129,14 @@ export default function App() {
 
       {currentView === 'shop' && (
         <ShopScreen 
+          user={user} 
+          profile={profileData}
+          onBack={() => setCurrentView('dashboard')} 
+        />
+      )}
+
+      {currentView === 'leaderboard' && (
+        <LeaderboardScreen 
           user={user} 
           profile={profileData}
           onBack={() => setCurrentView('dashboard')} 

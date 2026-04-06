@@ -306,16 +306,60 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
 
             if (user) {
                 try {
-                    const isPerfect = score === questions.length;
-                    const earnedXP = (score * 10) + (isPerfect ? 50 : 0);
-                    const earnedCrystals = calculateCrystals(difficulty, score, questions.length);
-                    
                     const profileRef = doc(db, 'users', user.uid);
-                    await setDoc(profileRef, { 
-                        xp: profile.xp + earnedXP,
-                        crystals: profile.crystals + earnedCrystals,
-                        totalQuizzes: (profile.totalQuizzes || 0) + 1
-                    }, { merge: true });
+                    const userSnap = await getDoc(profileRef);
+                    
+                    if (userSnap.exists()) {
+                        const userData = userSnap.data();
+
+                        const isPerfect = score === questions.length;
+                        const earnedXP = (score * 10) + (isPerfect ? 50 : 0);
+                        const earnedCrystals = calculateCrystals(difficulty, score, questions.length);
+                        
+                        let cTotal = userData.currentQuizStreak || 0;
+                        let mTotal = userData.maxQuizStreak || 0;
+                        let cEasy = userData.currentEasyStreak || 0;
+                        let mEasy = userData.maxEasyStreak || 0;
+                        let cMed = userData.currentMediumStreak || 0;
+                        let mMed = userData.maxMediumStreak || 0;
+                        let cHard = userData.currentHardStreak || 0;
+                        let mHard = userData.maxHardStreak || 0;
+
+                        if (isPerfect) {
+                            cTotal++;
+                            if (cTotal > mTotal) mTotal = cTotal;
+                            
+                            if (difficulty === 'Easy') {
+                                cEasy++;
+                                if (cEasy > mEasy) mEasy = cEasy;
+                            } else if (difficulty === 'Medium') {
+                                cMed++;
+                                if (cMed > mMed) mMed = cMed;
+                            } else if (difficulty === 'Hard') {
+                                cHard++;
+                                if (cHard > mHard) mHard = cHard;
+                            }
+                        } else {
+                            cTotal = 0;
+                            cEasy = 0;
+                            cMed = 0;
+                            cHard = 0;
+                        }
+                        
+                        await setDoc(profileRef, { 
+                            xp: (userData.xp || 0) + earnedXP,
+                            crystals: (userData.crystals || 0) + earnedCrystals,
+                            totalQuizzes: (userData.totalQuizzes || 0) + 1,
+                            currentQuizStreak: cTotal,
+                            maxQuizStreak: mTotal,
+                            currentEasyStreak: cEasy,
+                            maxEasyStreak: mEasy,
+                            currentMediumStreak: cMed,
+                            maxMediumStreak: mMed,
+                            currentHardStreak: cHard,
+                            maxHardStreak: mHard
+                        }, { merge: true });
+                    }
 
                     const historyRef = collection(db, 'users', user.uid, 'history');
                     const promises = sessionHistory.map(item => addDoc(historyRef, item));
