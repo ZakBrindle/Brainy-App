@@ -132,7 +132,7 @@ export default function AdminPanel({ onBack }) {
                                 <tbody>
                                     {users.map(u => (
                                         <tr key={u.id} className="border-b-2 border-slate-300 hover:bg-slate-50 font-bold">
-                                            <td className="p-4 border-r-4 border-slate-900">{u.displayName || 'Unknown'}</td>
+                                            <td className="p-4 border-r-4 border-slate-900">{u.displayName || u.name || u.friendCode || 'Brainiac'}</td>
                                             <td className="p-4 border-r-4 border-slate-900 text-sm">{u.email || (u.parentUid ? 'Child Account' : 'N/A')}</td>
                                             <td className="p-4 border-r-4 border-slate-900 capitalize">{u.role}</td>
                                             <td className="p-4 border-r-4 border-slate-900 text-center">{u.totalSessions || 0}</td>
