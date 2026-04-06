@@ -540,10 +540,39 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
         if (!question) return null;
 
         const colors = ["bg-pink-400", "bg-cyan-400", "bg-yellow-400", "bg-lime-400"];
+        const progress = (currentQIndex / questions.length) * 100;
+        const isSparkling = progress >= 80;
+
         return (
-            <div className="flex flex-col h-full max-w-4xl mx-auto w-full px-4 py-6 relative pt-10">
-                <div className="bg-white border-4 border-black rounded-[2rem] p-8 mb-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center">
-                    <h2 className="text-3xl font-black">{question.question}</h2>
+            <div className="flex flex-col h-full max-w-4xl mx-auto w-full px-4 py-6 relative pt-16">
+                
+                {/* Fixed Progress Bar */}
+                <div className="fixed top-0 left-0 right-0 h-8 bg-blue-900 border-b-4 border-black z-40 overflow-hidden shadow-[0_4px_0_rgba(0,0,0,0.5)]">
+                    <div 
+                        className={`h-full transition-all duration-700 ease-out relative flex items-center justify-end pr-2 border-r-4 border-black ${isSparkling ? 'bg-gradient-to-r from-yellow-300 to-orange-400' : 'bg-green-400'}`}
+                        style={{ width: `${Math.max(progress, 2)}%` }}
+                    >
+                        {isSparkling && (
+                            <div className="flex gap-1 animate-pulse">
+                                <Sparkles className="w-5 h-5 text-white" />
+                                <Sparkles className="w-4 h-4 text-white" />
+                            </div>
+                        )}
+                    </div>
+                    {/* Mastery Checkpoints */}
+                    {masteryMode && questions.length === 15 && (
+                        <>
+                            <div className="absolute top-0 bottom-0 left-[26.66%] w-2 bg-black border-l-2 border-r-2 border-black"></div>
+                            <div className="absolute top-0 bottom-0 left-[60%] w-2 bg-black border-l-2 border-r-2 border-black"></div>
+                        </>
+                    )}
+                </div>
+
+                <div className="bg-white border-4 border-black rounded-[2rem] p-8 mb-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center relative mt-6">
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-yellow-400 border-4 border-black px-4 py-1 rounded-full font-black text-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        {currentQIndex + 1} / {questions.length}
+                    </div>
+                    <h2 className="text-3xl font-black mt-2">{question.question}</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
                     {question.options.map((opt, idx) => {
