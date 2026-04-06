@@ -82,6 +82,9 @@ export default function Leaderboard({ user, profile, onBack }) {
                         ) : (
                             displayUsers.map((u, index) => {
                                 const isMe = u.id === user.uid;
+                                const nameToDisplay = u.displayName || u.name || u.friendCode || 'Brainiac';
+                                const initial = nameToDisplay ? nameToDisplay.charAt(0).toUpperCase() : '?';
+                                
                                 return (
                                     <div key={u.id} className={`border-4 border-black rounded-3xl p-4 md:p-6 flex flex-col md:flex-row items-center gap-4 transition-transform hover:scale-105 ${isMe ? 'bg-yellow-100 border-8' : 'bg-white'} shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]`}>
                                         <div className="flex items-center gap-4 w-full md:w-auto">
@@ -89,16 +92,16 @@ export default function Leaderboard({ user, profile, onBack }) {
                                                 {index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                                             </div>
                                             <div className="w-16 h-16 bg-blue-100 border-4 border-black rounded-full flex items-center justify-center font-black text-2xl text-blue-800 shrink-0">
-                                                {u.displayName ? u.displayName[0].toUpperCase() : '?'}
+                                                {initial}
                                             </div>
                                             <div className="flex-1 md:hidden">
-                                                <div className="font-black text-2xl">{u.displayName || 'Anonymous'} {isMe && '(You)'}</div>
+                                                <div className="font-black text-2xl">{nameToDisplay} {isMe && '(You)'}</div>
                                                 <div className="font-bold text-yellow-600 flex items-center gap-1"><Trophy className="w-4 h-4"/> {u.xp || 0} XP</div>
                                             </div>
                                         </div>
 
                                         <div className="hidden md:flex flex-col flex-1 pb-1">
-                                            <div className="font-black text-3xl">{u.displayName || 'Anonymous'} {isMe && '(You)'}</div>
+                                            <div className="font-black text-3xl">{nameToDisplay} {isMe && '(You)'}</div>
                                             <div className="font-bold text-yellow-600 flex items-center gap-1"><Trophy className="w-5 h-5"/> {u.xp || 0} XP</div>
                                         </div>
 
