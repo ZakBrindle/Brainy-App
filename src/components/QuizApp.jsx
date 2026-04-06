@@ -357,8 +357,8 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
                         const userData = userSnap.data();
 
                         const isPerfect = score === questions.length;
-                        const earnedXP = (score * 10) + (isPerfect ? 50 : 0);
-                        const earnedCrystals = calculateCrystals(difficulty, score, questions.length);
+                        let earnedXP = (score * 10) + (isPerfect ? 50 : 0);
+                        let earnedCrystals = calculateCrystals(difficulty, score, questions.length);
                         
                         let cTotal = userData.currentQuizStreak || 0;
                         let mTotal = userData.maxQuizStreak || 0;
@@ -631,9 +631,14 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
     };
 
     const renderResults = () => {
-        const earnedXP = (score * 10) + (score === questions.length ? 50 : 0);
-        const earnedCrystals = calculateCrystals(difficulty, score, questions.length);
         const masteryWon = masteryMode && score >= 13;
+        let earnedXP = (score * 10) + (score === questions.length ? 50 : 0);
+        let earnedCrystals = calculateCrystals(difficulty, score, questions.length);
+        
+        if (masteryWon) {
+            earnedXP += 100;
+            earnedCrystals += 50;
+        }
         return (
             <div className="flex flex-col items-center justify-center h-full space-y-8 animate-in zoom-in duration-500 max-w-2xl mx-auto w-full px-4 text-center">
                 <Trophy className="w-32 h-32 text-yellow-400 drop-shadow-[0_8px_0_rgba(0,0,0,1)] animate-bounce" />

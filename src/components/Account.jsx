@@ -1,6 +1,6 @@
 import React from 'react';
 import { auth } from '../lib/firebase';
-import { User, LogOut, ArrowLeft, Trophy, Flame, BrainCircuit, GraduationCap } from 'lucide-react';
+import { User, LogOut, ArrowLeft, Trophy, Flame, BrainCircuit, GraduationCap, Gamepad2 } from 'lucide-react';
 
 export default function Account({ user, userRole, profile, onBack }) {
   // Rank logic
@@ -65,6 +65,28 @@ export default function Account({ user, userRole, profile, onBack }) {
                 <div className="bg-pink-100 border-4 border-black p-4 rounded-2xl flex items-center justify-between">
                     <span className="flex items-center gap-2"><BrainCircuit className="text-pink-600" /> Current Rank</span>
                     <span className="text-lg font-black">{currentRank}</span>
+                </div>
+                <div className="bg-blue-100 border-4 border-black p-4 rounded-2xl flex items-center justify-between">
+                    <span className="flex items-center gap-2"><Gamepad2 className="text-blue-600" /> Total Games</span>
+                    <span className="text-2xl font-black">{profile?.totalQuizzes || 0}</span>
+                </div>
+            </div>
+
+            <div className="mt-6 text-left">
+                <h4 className="text-xl font-black mb-3">Quiz Streaks</h4>
+                <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-green-100 border-4 border-black p-3 rounded-2xl flex flex-col items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <span className="text-sm font-bold text-gray-500 mb-1">Easy</span>
+                        <span className="text-3xl font-black text-green-700">{profile?.maxEasyStreak || 0}</span>
+                    </div>
+                    <div className="bg-orange-100 border-4 border-black p-3 rounded-2xl flex flex-col items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <span className="text-sm font-bold text-gray-500 mb-1">Medium</span>
+                        <span className="text-3xl font-black text-orange-700">{profile?.maxMediumStreak || 0}</span>
+                    </div>
+                    <div className="bg-red-100 border-4 border-black p-3 rounded-2xl flex flex-col items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <span className="text-sm font-bold text-gray-500 mb-1">Hard</span>
+                        <span className="text-3xl font-black text-red-700">{profile?.maxHardStreak || 0}</span>
+                    </div>
                 </div>
             </div>
 
