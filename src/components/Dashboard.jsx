@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../lib/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { Play, Settings, Users, BrainCircuit, Trophy, Flame, Gem, Swords, Map as MapIcon, ShoppingBag } from 'lucide-react';
+import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { Play, Settings, Users, BrainCircuit, Trophy, Flame, Gem, Swords, Map as MapIcon, ShoppingBag, Sparkles } from 'lucide-react';
 import StreakPopup from './StreakPopup';
 
 export default function Dashboard({ user, userRole, profile, onNavigate }) {
@@ -57,11 +57,65 @@ export default function Dashboard({ user, userRole, profile, onNavigate }) {
     }
   };
 
+  const [activeFriendQuests, setActiveFriendQuests] = useState([]);
+  const [hiddenQuests, setHiddenQuests] = useState([]);
+
+  useEffect(() => {
+     const friendUids = profile?.friends?.map(f => f.uid) || [];
+     if (profile?.parentUid) friendUids.push(profile.parentUid);
+     
+     if (friendUids.length === 0) return;
+     
+     const q = query(collection(db, 'quests'), where('status', '==', 'lobby'));
+     const unsub = onSnapshot(q, (snap) => {
+         const quests = [];
+         snap.forEach(docSnap => {
+             const d = docSnap.data();
+             if (friendUids.includes(d.hostUid) && d.hostUid !== user.uid) {
+                 const joined = d.players.some(p => p.uid === user.uid);
+                 if (!joined) quests.push(d);
+             }
+         });
+         setActiveFriendQuests(quests);
+     });
+     return () => unsub();
+  }, [profile?.friends, profile?.parentUid, user.uid]);
+
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-8 animate-in fade-in zoom-in duration-500 max-w-lg mx-auto px-4 relative">
       {streakData.showPopup && (
         <StreakPopup streakCount={streakData.count} onClose={() => setStreakData(prev => ({...prev, showPopup: false}))} />
       )}
+
+      {/* Friend Quest Banners */}
+      {activeFriendQuests.filter(q => !hiddenQuests.includes(q.id)).map(q => (
+          <div key={q.id} className="w-full bg-orange-200 border-4 border-black p-4 rounded-3xl flex justify-between items-center shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] animate-bounce mt-8 relative z-50">
+              <div className="flex items-center gap-3">
+                  <Sparkles className="w-8 h-8 text-orange-600 fill-current" />
+                  <div>
+                      <div className="font-black text-xl text-black">{q.hostName} is waiting in Lobby!</div>
+                      <div className="font-bold text-gray-700">Quick Join their Party!</div>
+                  </div>
+              </div>
+              <div className="flex gap-2">
+                  <button 
+                      onClick={() => setHiddenQuests(prev => [...prev, q.id])}
+                      className="bg-white border-2 border-black p-2 rounded-xl text-gray-500 hover:bg-gray-100 font-bold active:translate-y-[2px]"
+                  >
+                      Dismiss
+                  </button>
+                  <button 
+                      onClick={() => {
+                          sessionStorage.setItem('pendingJoin', q.id);
+                          onNavigate('questLobby');
+                      }}
+                      className="bg-green-400 border-2 border-black px-4 py-2 rounded-xl font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none hover:bg-green-300"
+                  >
+                      Join
+                  </button>
+              </div>
+          </div>
+      ))}
 
       {/* Main Stats Card */}
       <div className="w-full bg-white border-8 border-black rounded-[3rem] p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] text-center relative mt-16">

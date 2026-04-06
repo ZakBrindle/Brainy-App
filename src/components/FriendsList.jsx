@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { Users, UserPlus, Search, Shield, ArrowLeft, Trophy, Flame } from 'lucide-react';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { Users, UserPlus, Search, Shield, ArrowLeft, Trophy, Flame, Check, X } from 'lucide-react';
 
 export default function FriendsList({ user, userRole, parentUid, profile, onBack }) {
   const [friends, setFriends] = useState([]);
@@ -42,8 +42,7 @@ export default function FriendsList({ user, userRole, parentUid, profile, onBack
     setLoading(true);
 
     try {
-      // Find user by child/magic code. We will search `loginCodes` first!
-      const q = query(collection(db, 'loginCodes'), where('code', '==', searchCode.toUpperCase()));
+      const q = query(collection(db, 'users'), where('friendCode', '==', searchCode.toUpperCase()));
       const snap = await getDocs(q);
       
       if (snap.empty) {
@@ -52,28 +51,29 @@ export default function FriendsList({ user, userRole, parentUid, profile, onBack
         return;
       }
 
-      const codeData = snap.docs[0].data();
-      const friendData = { uid: codeData.childId, name: codeData.childName, type: 'child' };
+      const targetDoc = snap.docs[0];
+      const targetData = targetDoc.data();
+      const targetUid = targetDoc.id;
 
-      if (userRole === 'child' && parentUid) {
-          // Send request to parent
-          await updateDoc(doc(db, 'users', parentUid), {
-              pendingFriendRequests: arrayUnion({
-                  requesterUid: user.uid,
-                  requesterName: profile?.displayName || 'Unknown',
-                  childUid: codeData.childId,
-                  childName: codeData.childName
-              })
-          });
-          alert("Friend request sent to your parents for approval!");
-      } else {
-          // Save to current user's document directly if Parent
-          await updateDoc(doc(db, 'users', user.uid), {
-            friends: arrayUnion(friendData)
-          });
-          setFriends(prev => [...prev, friendData]);
+      if (targetUid === user.uid) {
+         alert("You can't add yourself!");
+         setLoading(false); return;
       }
 
+      if (profile?.friends?.some(f => f.uid === targetUid)) {
+         alert("You are already friends!");
+         setLoading(false); return;
+      }
+
+      await updateDoc(doc(db, 'users', targetUid), {
+          incomingFriendRequests: arrayUnion({
+              requesterUid: user.uid,
+              requesterName: profile?.displayName || 'Unknown',
+              requesterCode: profile?.friendCode || ''
+          })
+      });
+      
+      alert("Friend request sent to " + (targetData.displayName || 'friend') + "!");
       setSearchCode('');
     } catch (e) {
       console.error(e);
@@ -81,6 +81,33 @@ export default function FriendsList({ user, userRole, parentUid, profile, onBack
     } finally {
       setLoading(false);
     }
+  };
+
+  const acceptRequest = async (req) => {
+      try {
+          await updateDoc(doc(db, 'users', user.uid), {
+             incomingFriendRequests: arrayRemove(req),
+             friends: arrayUnion({ uid: req.requesterUid, type: 'friend', name: req.requesterName })
+          });
+          
+          await updateDoc(doc(db, 'users', req.requesterUid), {
+             friends: arrayUnion({ uid: user.uid, type: 'friend', name: profile?.displayName || 'Unknown' })
+          });
+          
+          alert("Friend added!");
+          loadFriends();
+      } catch (e) {
+         alert("Error accepting friend");
+      }
+  };
+
+  const declineRequest = async (req) => {
+      try {
+          await updateDoc(doc(db, 'users', user.uid), {
+             incomingFriendRequests: arrayRemove(req)
+          });
+          loadFriends();
+      } catch (e) {}
   };
 
   return (
@@ -98,6 +125,12 @@ export default function FriendsList({ user, userRole, parentUid, profile, onBack
           <h2 className="text-5xl font-black text-black">Friends List</h2>
         </div>
 
+        <div className="bg-yellow-200 border-4 border-black p-4 rounded-3xl text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center">
+            <span className="font-bold text-gray-700">Your Magic Friend Code:</span>
+            <span className="text-4xl font-black tracking-widest text-black mt-2 bg-white px-6 py-2 rounded-2xl border-4 border-black">{profile?.friendCode || 'Loading...'}</span>
+            <span className="text-sm font-bold text-gray-600 mt-3">Share this code so friends can send you a request!</span>
+        </div>
+
         <div className="bg-cyan-100 border-4 border-black p-6 rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <h3 className="text-xl font-black mb-4 flex items-center gap-2 text-cyan-800">
             <UserPlus className="w-6 h-6" /> Add a Friend
@@ -106,17 +139,47 @@ export default function FriendsList({ user, userRole, parentUid, profile, onBack
             <input 
               value={searchCode}
               onChange={e => setSearchCode(e.target.value)}
-              placeholder="Enter Friend's Magic Code"
-              className="flex-1 border-4 border-black rounded-xl p-3 font-bold text-lg uppercase"
+              placeholder="e.g. ZAK-TIGER"
+              className="flex-1 border-4 border-black rounded-xl p-3 font-black text-lg uppercase placeholder:font-bold"
             />
             <button 
               disabled={loading}
-              className="bg-green-400 border-4 border-black rounded-xl px-6 font-black hover:bg-green-300 disabled:opacity-50"
+              className="bg-green-400 border-4 border-black rounded-xl px-6 font-black hover:bg-green-300 disabled:opacity-50 active:translate-y-[2px]"
             >
               Add
             </button>
           </form>
         </div>
+
+        {profile?.incomingFriendRequests?.length > 0 && (
+            <div className="bg-orange-100 border-4 border-black p-6 rounded-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <h3 className="text-xl font-black mb-4 text-orange-800">Incoming Requests!</h3>
+                <div className="space-y-3">
+                    {profile.incomingFriendRequests.map((req, idx) => (
+                        <div key={idx} className="bg-white border-2 border-black rounded-xl p-3 flex justify-between items-center font-bold">
+                            <div>
+                                <div className="text-lg font-black text-black">{req.requesterName}</div>
+                                <div className="text-xs text-gray-500 font-mono tracking-widest">{req.requesterCode}</div>
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => acceptRequest(req)}
+                                    className="bg-green-400 border-2 border-black p-2 rounded-lg hover:bg-green-300"
+                                >
+                                    <Check className="w-5 h-5" />
+                                </button>
+                                <button 
+                                    onClick={() => declineRequest(req)}
+                                    className="bg-red-400 border-2 border-black p-2 rounded-lg hover:bg-red-300"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {friends.length === 0 ? (

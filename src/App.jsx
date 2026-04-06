@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './lib/firebase';
+import { generateFriendCode } from './lib/words';
 import LoginScreen from './components/LoginScreen';
 import Dashboard from './components/Dashboard';
 import AccountScreen from './components/Account';
@@ -32,6 +33,7 @@ export default function App() {
           if (docSnap.exists()) {
             const data = docSnap.data();
             let r = data.role;
+            let currentFriendCode = data.friendCode;
             
             // Auto-resolve legacy google accounts to parent
             if (!r && currentUser.email) {
@@ -41,9 +43,17 @@ export default function App() {
                 });
             }
 
+            // Auto-generate missing friend code
+            if (!currentFriendCode) {
+                currentFriendCode = generateFriendCode(data.displayName || currentUser.displayName || 'USER');
+                import('firebase/firestore').then(({ updateDoc }) => {
+                    updateDoc(doc(db, 'users', currentUser.uid), { friendCode: currentFriendCode }).catch(console.error);
+                });
+            }
+
             setUserRole(r);
             setParentUid(data.parentUid || null);
-            setProfileData({ ...data, role: r });
+            setProfileData({ ...data, role: r, friendCode: currentFriendCode });
           }
           setLoading(false);
         });

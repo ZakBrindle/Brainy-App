@@ -23,16 +23,32 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
     useEffect(() => {
         if (!user) return;
         
-        // Listen to active quests where friends might be or where I am
-        // For simplicity, we'll listen to a "public" or "friends-only" global quests list,
-        // or just rely on Join Code / Direct Friend Invitation.
-        // Let's implement "Friend's active quests" by searching for games where hostUid is in my friends list.
         const friendUids = (profile?.friends || []).map(f => f.uid);
         if (profile?.parentUid) friendUids.push(profile.parentUid);
 
-        // Fetching active quests from friends
-        // Note: Real-time query across all friends might be slow, so we'll start with Join Code for now
-        // and a "My Current Quest" listener.
+        if (friendUids.length === 0) return;
+
+        const q = query(collection(db, 'quests'), where('status', '==', 'lobby'));
+        const unsub = onSnapshot(q, (snap) => {
+            const quests = [];
+            snap.forEach(docSnap => {
+                const d = docSnap.data();
+                if (friendUids.includes(d.hostUid) && d.hostUid !== user.uid) {
+                     const joined = d.players.some(p => p.uid === user.uid);
+                     if (!joined) quests.push(d);
+                }
+            });
+            setActiveQuests(quests);
+        });
+
+        // Check if coming from dashboard Quick Join
+        const pend = sessionStorage.getItem('pendingJoin');
+        if (pend) {
+            sessionStorage.removeItem('pendingJoin');
+            joinQuest(pend);
+        }
+
+        return () => unsub();
     }, [user, profile]);
 
     const createQuest = async () => {
@@ -289,6 +305,29 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
                             Join
                         </button>
                     </div>
+
+                    {activeQuests.length > 0 && (
+                        <div className="mt-8 pt-6 border-t-4 border-black">
+                            <h3 className="text-xl font-black mb-4 flex items-center gap-2 text-pink-800">
+                                <Sparkles className="w-5 h-5 fill-current" /> Friends in Lobby
+                            </h3>
+                            <div className="space-y-3">
+                                {activeQuests.map(q => (
+                                    <div key={q.id} className="bg-white border-4 border-black rounded-2xl p-3 flex justify-between items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                        <div className="font-black text-lg">
+                                            {q.hostName}'s Party <span className="text-gray-400 block text-xs">({q.settings.difficulty})</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => joinQuest(q.id)}
+                                            className="bg-green-400 border-4 border-black rounded-xl px-4 py-2 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-[4px] active:shadow-none hover:bg-green-300 flex items-center gap-2"
+                                        >
+                                            <Play className="w-4 h-4 fill-current" /> JOIN
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -300,7 +339,7 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
         const myPlayer = currentQuest?.players[myPlayerIndex];
         const isReady = myPlayer?.ready;
         const suggestedTopics = currentQuest?.settings.suggestTopics && currentQuest?.shuffledTopics
-             ? currentQuest.shuffledTopics.slice(myPlayerIndex * 4, myPlayerIndex * 4 + 4)
+             ? currentQuest.shuffledTopics.slice(myPlayerIndex * 6, myPlayerIndex * 6 + 6)
              : [];
 
         return (
