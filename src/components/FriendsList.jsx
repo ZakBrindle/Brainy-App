@@ -135,16 +135,16 @@ export default function FriendsList({ user, userRole, parentUid, profile, onBack
           <h3 className="text-xl font-black mb-4 flex items-center gap-2 text-cyan-800">
             <UserPlus className="w-6 h-6" /> Add a Friend
           </h3>
-          <form onSubmit={addFriend} className="flex gap-2">
+          <form onSubmit={addFriend} className="flex flex-col sm:flex-row gap-3">
             <input 
               value={searchCode}
               onChange={e => setSearchCode(e.target.value)}
               placeholder="e.g. ZAK-TIGER"
-              className="flex-1 border-4 border-black rounded-xl p-3 font-black text-lg uppercase placeholder:font-bold"
+              className="flex-1 min-w-0 border-4 border-black rounded-xl p-3 font-black text-lg uppercase placeholder:font-bold focus:outline-none focus:ring-4 focus:ring-cyan-300"
             />
             <button 
               disabled={loading}
-              className="bg-green-400 border-4 border-black rounded-xl px-6 font-black hover:bg-green-300 disabled:opacity-50 active:translate-y-[2px]"
+              className="bg-green-400 border-4 border-black rounded-xl p-3 px-6 font-black hover:bg-green-300 disabled:opacity-50 active:translate-y-[2px] shrink-0"
             >
               Add
             </button>

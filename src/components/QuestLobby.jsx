@@ -289,18 +289,18 @@ export default function QuestLobby({ user, profile, onBack, onStartQuest }) {
                     <h3 className="text-2xl font-black mb-4 flex items-center gap-2">
                         <Key className="w-6 h-6" /> Enter Magical Code
                     </h3>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-3">
                         <input 
                             value={joinCode}
                             onChange={e => setJoinCode(e.target.value.toUpperCase())}
                             placeholder="QUEST_ID"
-                            className="flex-1 border-4 border-black rounded-xl p-3 font-black text-center text-xl uppercase"
+                            className="flex-1 min-w-0 border-4 border-black rounded-xl p-3 font-black text-center text-xl uppercase focus:outline-none focus:ring-4 focus:ring-pink-400"
                             maxLength={6}
                         />
                         <button 
                             onClick={() => joinQuest(joinCode)}
                             disabled={isLoading || joinCode.length < 4}
-                            className="bg-yellow-400 border-4 border-black rounded-xl px-6 font-black hover:bg-yellow-300 active:translate-y-[2px] transition-all disabled:opacity-50"
+                            className="bg-yellow-400 border-4 border-black rounded-xl px-6 py-3 font-black hover:bg-yellow-300 active:translate-y-[2px] transition-all disabled:opacity-50 shrink-0"
                         >
                             Join
                         </button>

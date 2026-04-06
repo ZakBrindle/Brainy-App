@@ -187,17 +187,17 @@ export default function SettingsScreen({ user, userRole, profile, onBack }) {
 
             <div className="border-4 border-black p-6 rounded-3xl bg-cyan-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               <h3 className="text-2xl font-black mb-4">Add a Child Profile</h3>
-              <div className="flex gap-2 mb-4">
+              <div className="flex flex-col sm:flex-row gap-3 mb-4">
                 <input 
                   value={newChildName}
                   onChange={e => setNewChildName(e.target.value)}
                   placeholder="Child's Name"
-                  className="flex-1 border-4 border-black rounded-xl p-3 font-bold text-lg"
+                  className="flex-1 min-w-0 border-4 border-black rounded-xl p-3 font-bold text-lg focus:outline-none focus:ring-4 focus:ring-cyan-300"
                 />
                 <button 
                   onClick={generateChildCode}
                   disabled={loading || !newChildName.trim()}
-                  className="bg-green-400 border-4 border-black rounded-xl px-4 font-black flex items-center gap-2 hover:bg-green-300 disabled:opacity-50"
+                  className="bg-green-400 border-4 border-black rounded-xl p-3 font-black flex justify-center items-center gap-2 hover:bg-green-300 disabled:opacity-50 shrink-0"
                 >
                   <UserPlus className="w-6 h-6" /> Create
                 </button>
@@ -219,14 +219,14 @@ export default function SettingsScreen({ user, userRole, profile, onBack }) {
                       const stats = liveChildren.find(lc => lc.id === c.id || lc.childId === c.id);
                       return (
                         <li key={c.id} className="bg-white border-4 border-black p-4 rounded-2xl flex flex-col gap-3 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                          <div className="flex justify-between items-center bg-cyan-100 p-2 rounded-xl border-2 border-black">
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-cyan-100 p-3 rounded-xl border-2 border-black gap-3">
                             <span className="text-xl font-black">{c.name}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-slate-600 font-mono tracking-widest bg-white px-2 py-1 border-2 border-black rounded-md">{c.activeCode}</span>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-slate-600 font-mono tracking-widest bg-white px-2 py-1 border-2 border-black rounded-md shrink-0">{c.activeCode}</span>
                               <button
                                 onClick={() => regenerateCode(c.id, c.name)}
                                 disabled={loading}
-                                className="bg-yellow-400 border-2 border-black rounded-lg px-3 py-1 text-sm font-black hover:bg-yellow-300 disabled:opacity-50 active:translate-y-[2px]"
+                                className="bg-yellow-400 border-2 border-black rounded-lg px-3 py-1 text-sm font-black hover:bg-yellow-300 disabled:opacity-50 active:translate-y-[2px] shrink-0"
                               >
                                 New Code
                               </button>
@@ -248,7 +248,7 @@ export default function SettingsScreen({ user, userRole, profile, onBack }) {
                                   }
                                 }}
                                 disabled={loading}
-                                className="bg-red-400 border-2 border-black rounded-lg p-1 font-black hover:bg-red-300 disabled:opacity-50 active:translate-y-[2px] text-white"
+                                className="bg-red-400 border-2 border-black rounded-lg p-1 font-black hover:bg-red-300 disabled:opacity-50 active:translate-y-[2px] text-white shrink-0 ml-auto sm:ml-0"
                                 title="Delete Profile"
                               >
                                 <X className="w-5 h-5" />
