@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { Trophy, ArrowLeft, Users, Globe, Flame, Castle, AlertCircle } from 'lucide-react';
+import { Trophy, ArrowLeft, Users, Globe, Flame, Castle, AlertCircle, GraduationCap } from 'lucide-react';
 
 export default function Leaderboard({ user, profile, onBack }) {
     const [filter, setFilter] = useState('Everyone'); // 'Everyone' | 'Friends'
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [expandedUserId, setExpandedUserId] = useState(null);
 
     useEffect(() => {
         loadLeaderboard();
@@ -86,43 +87,68 @@ export default function Leaderboard({ user, profile, onBack }) {
                                 const initial = nameToDisplay ? nameToDisplay.charAt(0).toUpperCase() : '?';
                                 
                                 return (
-                                    <div key={u.id} className={`border-4 border-black rounded-3xl p-4 md:p-6 flex flex-col md:flex-row items-center gap-4 transition-transform hover:scale-105 ${isMe ? 'bg-yellow-100 border-8' : 'bg-white'} shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]`}>
-                                        <div className="flex items-center gap-4 w-full md:w-auto">
-                                            <div className="text-4xl font-black text-gray-400 min-w-[2.5rem] text-center">
-                                                {index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                                    <div 
+                                        key={u.id} 
+                                        onClick={() => setExpandedUserId(expandedUserId === u.id ? null : u.id)}
+                                        className={`border-4 border-black rounded-3xl p-4 md:p-6 flex flex-col transition-transform hover:scale-105 cursor-pointer ${isMe ? 'bg-yellow-100 border-8' : 'bg-white'} shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]`}
+                                    >
+                                        <div className="flex flex-col md:flex-row items-center gap-4 w-full">
+                                            <div className="flex items-center gap-4 w-full md:w-auto">
+                                                <div className="text-4xl font-black text-gray-400 min-w-[2.5rem] text-center">
+                                                    {index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                                                </div>
+                                                <div className="w-16 h-16 bg-blue-100 border-4 border-black rounded-full flex items-center justify-center font-black text-2xl text-blue-800 shrink-0">
+                                                    {initial}
+                                                </div>
+                                                <div className="flex-1 md:hidden">
+                                                    <div className="font-black text-2xl">{nameToDisplay} {isMe && '(You)'}</div>
+                                                    <div className="font-bold text-yellow-600 flex items-center gap-1"><Trophy className="w-4 h-4"/> {u.xp || 0} XP</div>
+                                                </div>
                                             </div>
-                                            <div className="w-16 h-16 bg-blue-100 border-4 border-black rounded-full flex items-center justify-center font-black text-2xl text-blue-800 shrink-0">
-                                                {initial}
+
+                                            <div className="hidden md:flex flex-col flex-1 pb-1">
+                                                <div className="font-black text-3xl">{nameToDisplay} {isMe && '(You)'}</div>
+                                                <div className="font-bold text-yellow-600 flex items-center gap-1"><Trophy className="w-5 h-5"/> {u.xp || 0} XP</div>
                                             </div>
-                                            <div className="flex-1 md:hidden">
-                                                <div className="font-black text-2xl">{nameToDisplay} {isMe && '(You)'}</div>
-                                                <div className="font-bold text-yellow-600 flex items-center gap-1"><Trophy className="w-4 h-4"/> {u.xp || 0} XP</div>
+
+                                            {/* Badges container */}
+                                            <div className="grid grid-cols-3 gap-2 w-full md:w-auto mt-2 md:mt-0">
+                                                <div className="bg-orange-100 border-2 border-black rounded-xl p-2 flex flex-col items-center justify-center relative group" title="Max Day Streak">
+                                                    <Flame className="w-6 h-6 text-orange-500 mb-1" />
+                                                    <span className="font-black text-black">{u.maxStreakCount || u.streakCount || 0}</span>
+                                                    <div className="absolute -top-8 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">Day Streak</div>
+                                                </div>
+                                                <div className="bg-blue-100 border-2 border-black rounded-xl p-2 flex flex-col items-center justify-center relative group" title="Max 100% Quiz Streak">
+                                                    <Flame className="w-6 h-6 text-blue-500 mb-1" />
+                                                    <span className="font-black text-black">{u.maxQuizStreak || 0}</span>
+                                                    <div className="absolute -top-8 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">Quiz Streak</div>
+                                                </div>
+                                                <div className="bg-purple-100 border-2 border-black rounded-xl p-2 flex flex-col items-center justify-center relative group" title="Quest Champion Count">
+                                                    <Castle className="w-6 h-6 text-purple-500 mb-1" />
+                                                    <span className="font-black text-black">{u.questChampionCount || 0}</span>
+                                                    <div className="absolute -top-8 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">Quest Champion</div>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div className="hidden md:flex flex-col flex-1 pb-1">
-                                            <div className="font-black text-3xl">{nameToDisplay} {isMe && '(You)'}</div>
-                                            <div className="font-bold text-yellow-600 flex items-center gap-1"><Trophy className="w-5 h-5"/> {u.xp || 0} XP</div>
-                                        </div>
-
-                                        {/* Badges container */}
-                                        <div className="grid grid-cols-3 gap-2 w-full md:w-auto mt-2 md:mt-0">
-                                            <div className="bg-orange-100 border-2 border-black rounded-xl p-2 flex flex-col items-center justify-center relative group" title="Max Day Streak">
-                                                <Flame className="w-6 h-6 text-orange-500 mb-1" />
-                                                <span className="font-black text-black">{u.maxStreakCount || u.streakCount || 0}</span>
-                                                <div className="absolute -top-8 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">Day Streak</div>
+                                        {expandedUserId === u.id && (
+                                            <div className="mt-6 pt-4 border-t-4 border-dashed border-gray-300 w-full animate-in slide-in-from-top-4">
+                                                <h4 className="font-black text-blue-800 flex items-center gap-2 mb-3">
+                                                    <GraduationCap className="w-5 h-5"/> Masteries
+                                                </h4>
+                                                {u.masteryList && u.masteryList.length > 0 ? (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {u.masteryList.map((m, i) => (
+                                                            <span key={i} className="bg-blue-100 border-2 border-black rounded-full px-3 py-1 font-black text-blue-900 text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                                                {m}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-gray-500 font-bold italic text-sm">No masteries yet!</div>
+                                                )}
                                             </div>
-                                            <div className="bg-blue-100 border-2 border-black rounded-xl p-2 flex flex-col items-center justify-center relative group" title="Max 100% Quiz Streak">
-                                                <Flame className="w-6 h-6 text-blue-500 mb-1" />
-                                                <span className="font-black text-black">{u.maxQuizStreak || 0}</span>
-                                                <div className="absolute -top-8 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">Quiz Streak</div>
-                                            </div>
-                                            <div className="bg-purple-100 border-2 border-black rounded-xl p-2 flex flex-col items-center justify-center relative group" title="Quest Champion Count">
-                                                <Castle className="w-6 h-6 text-purple-500 mb-1" />
-                                                <span className="font-black text-black">{u.questChampionCount || 0}</span>
-                                                <div className="absolute -top-8 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">Quest Champion</div>
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
                                 );
                             })

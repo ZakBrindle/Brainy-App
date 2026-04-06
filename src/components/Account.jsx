@@ -1,6 +1,6 @@
 import React from 'react';
 import { auth } from '../lib/firebase';
-import { User, LogOut, ArrowLeft, Trophy, Flame, BrainCircuit } from 'lucide-react';
+import { User, LogOut, ArrowLeft, Trophy, Flame, BrainCircuit, GraduationCap } from 'lucide-react';
 
 export default function Account({ user, userRole, profile, onBack }) {
   // Rank logic
@@ -66,6 +66,25 @@ export default function Account({ user, userRole, profile, onBack }) {
                     <span className="flex items-center gap-2"><BrainCircuit className="text-pink-600" /> Current Rank</span>
                     <span className="text-lg font-black">{currentRank}</span>
                 </div>
+            </div>
+
+            <div className="mt-8 text-left">
+                <h3 className="text-2xl font-black mb-4 flex items-center gap-2">
+                    <GraduationCap className="w-8 h-8 text-blue-600" /> Your Masteries
+                </h3>
+                {profile?.masteryList && profile.masteryList.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                        {profile.masteryList.map((m, i) => (
+                            <span key={i} className="bg-blue-100 border-4 border-black rounded-full px-4 py-2 font-black text-blue-800 text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                {m}
+                            </span>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="bg-gray-100 border-4 border-black border-dashed rounded-3xl p-6 text-center font-bold text-gray-500">
+                        Try a Mastery Challenge to earn badges!
+                    </div>
+                )}
             </div>
         </div>
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../lib/firebase';
 import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from 'firebase/firestore';
-import { Play, Settings, Users, BrainCircuit, Trophy, Flame, Gem, Swords, Map as MapIcon, ShoppingBag, Sparkles } from 'lucide-react';
+import { Play, Settings, Users, BrainCircuit, Trophy, Flame, Gem, Swords, Map as MapIcon, ShoppingBag, Sparkles, GraduationCap } from 'lucide-react';
 import StreakPopup from './StreakPopup';
 
 export default function Dashboard({ user, userRole, profile, onNavigate }) {
@@ -199,18 +199,27 @@ export default function Dashboard({ user, userRole, profile, onNavigate }) {
       </div>
 
       <div className="w-full space-y-4">
-        <button 
-          onClick={() => onNavigate('quiz')}
-          className="w-full bg-green-400 hover:bg-green-300 border-4 border-black rounded-3xl p-6 flex items-center justify-center gap-4 text-3xl font-black text-black transition-transform active:translate-y-[4px] shadow-[0px_8px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
-        >
-          <Play className="w-10 h-10 fill-current" /> Play Quiz
-        </button>
+        <div className="grid grid-cols-2 gap-4">
+            <button 
+                onClick={() => onNavigate('quiz')}
+                className="w-full bg-green-400 hover:bg-green-300 border-4 border-black rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-center gap-2 text-2xl sm:text-3xl font-black text-black transition-transform active:translate-y-[4px] shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+            >
+                <Play className="w-10 h-10 fill-current" /> Play Quiz
+            </button>
+
+            <button 
+                onClick={() => onNavigate('questLobby')}
+                className="w-full bg-purple-400 hover:bg-purple-300 border-4 border-black rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-center gap-2 text-2xl sm:text-3xl font-black text-black transition-transform active:translate-y-[4px] shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+            >
+                <Swords className="w-10 h-10 fill-current" /> Epic Quest
+            </button>
+        </div>
 
         <button 
-          onClick={() => onNavigate('questLobby')}
-          className="w-full bg-purple-400 hover:bg-purple-300 border-4 border-black rounded-3xl p-6 flex items-center justify-center gap-4 text-3xl font-black text-black transition-transform active:translate-y-[4px] shadow-[0px_8px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+            onClick={() => onNavigate('mastery')}
+            className="w-full bg-blue-500 hover:bg-blue-400 border-4 border-black rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-center gap-4 text-3xl font-black text-white transition-transform active:translate-y-[4px] shadow-[0px_8px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
         >
-          <Swords className="w-10 h-10 fill-current" /> Epic Quest
+            <GraduationCap className="w-12 h-12" /> Mastery Challenge
         </button>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-4">

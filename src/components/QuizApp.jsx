@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Star, HelpCircle, Check, X, Sparkles, Brain, Trophy, ArrowRight, RefreshCw, AlertCircle, History, Medal, ArrowLeft, Eye } from 'lucide-react';
-import { doc, getDoc, setDoc, collection, onSnapshot, addDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, onSnapshot, addDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_FIREBASE_API_KEY || ""; // Fallback
@@ -47,7 +47,36 @@ const generateQuizWithAI = async (topic, difficulty, numQuestions, previousQuest
         exclusionPrompt = `\nCRITICAL: DO NOT generate any of the following questions. The user has already answered them:\n${previousQuestions.map(q => `- ${q}`).join('\n')}\n`;
     }
 
-    const promptText = `
+    let promptText = "";
+    if (difficulty === 'Mastery') {
+        promptText = `
+    Topic: "${topic}"
+    Mode: "Mastery Challenge"
+    ${exclusionPrompt}
+    
+    Guidelines:
+    1. The language must be suitable for kids, engaging, and easy to read.
+    2. Exactly 4 options per question.
+    3. Generate exactly ${numQuestions} questions.
+    4. Questions 1 to 4 must be Easy difficulty.
+    5. Questions 5 to 9 must be Medium difficulty (incorrect options plausible).
+    6. Questions 10 to 15 must be Hard difficulty (challenging for the age group).
+    7. Provide a fun, educational explanation for the answer that teaches them something cool about the topic.
+
+    Return ONLY a valid JSON object following this exact schema:
+    {
+      "questions": [
+        {
+          "question": "string",
+          "options": ["string", "string", "string", "string"],
+          "correctIndex": number (0-3),
+          "explanation": "string (a fun fact explaining the answer)"
+        }
+      ]
+    }
+  `;
+    } else {
+        promptText = `
     Topic: "${topic}"
     Difficulty: "${difficulty}"
     ${exclusionPrompt}
@@ -70,6 +99,7 @@ const generateQuizWithAI = async (topic, difficulty, numQuestions, previousQuest
       ]
     }
   `;
+    }
 
     const payload = {
         contents: [{ parts: [{ text: promptText }] }],
@@ -231,7 +261,12 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
         setSessionHistory([]);
         setTopic("");
         setDisabledOptions([]);
-        setStep('difficulty');
+        if (masteryMode) {
+            setDifficulty('Mastery');
+            setStep('topic');
+        } else {
+            setStep('difficulty');
+        }
     };
 
     const handleSelectDifficulty = (diff) => {
@@ -256,6 +291,7 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
             if (d === 'Easy') numQuestions = 5;
             if (d === 'Medium') numQuestions = 8;
             if (d === 'Hard') numQuestions = 10;
+            if (d === 'Mastery') numQuestions = 15;
 
             const generatedQuestions = await generateQuizWithAI(t, d, numQuestions, exclusions, aiModels);
             setQuestions(generatedQuestions.slice(0, numQuestions));
@@ -295,6 +331,14 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
         setFeedback(null);
         setDisabledOptions([]);
         if (currentQIndex < questions.length - 1) {
+            if (masteryMode && currentQIndex === 3) {
+                setStep('masteryTransitionMedium');
+                return;
+            }
+            if (masteryMode && currentQIndex === 8) {
+                setStep('masteryTransitionHard');
+                return;
+            }
             setCurrentQIndex(prev => prev + 1);
         } else {
             if (questMode && onQuestComplete) {
@@ -346,6 +390,17 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
                             cHard = 0;
                         }
                         
+                        let updates = {};
+                        if (masteryMode) {
+                            if (score >= 13) {
+                                // Mastered! 
+                                updates.masteryList = arrayUnion(topic.trim());
+                                // Extra rewards for mastery!
+                                earnedXP += 100;
+                                earnedCrystals += 50;
+                            }
+                        }
+
                         await setDoc(profileRef, { 
                             xp: (userData.xp || 0) + earnedXP,
                             crystals: (userData.crystals || 0) + earnedCrystals,
@@ -357,7 +412,8 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
                             currentMediumStreak: cMed,
                             maxMediumStreak: mMed,
                             currentHardStreak: cHard,
-                            maxHardStreak: mHard
+                            maxHardStreak: mHard,
+                            ...updates
                         }, { merge: true });
                     }
 
@@ -548,17 +604,69 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
     const renderResults = () => {
         const earnedXP = (score * 10) + (score === questions.length ? 50 : 0);
         const earnedCrystals = calculateCrystals(difficulty, score, questions.length);
+        const masteryWon = masteryMode && score >= 13;
         return (
-            <div className="flex flex-col items-center justify-center h-full space-y-6 text-center animate-in zoom-in duration-500 px-4">
-                <h2 className="text-5xl font-black text-white drop-shadow-[0_6px_0_rgba(0,0,0,1)]">Quiz Complete!</h2>
-                <div className="bg-white border-8 border-black rounded-[3rem] p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md">
-                    <p className="text-8xl font-black text-purple-600">{score}/{questions.length}</p>
+            <div className="flex flex-col items-center justify-center h-full space-y-8 animate-in zoom-in duration-500 max-w-2xl mx-auto w-full px-4 text-center">
+                <Trophy className="w-32 h-32 text-yellow-400 drop-shadow-[0_8px_0_rgba(0,0,0,1)] animate-bounce" />
+                <h2 className="text-5xl md:text-6xl font-black text-white drop-shadow-[0_4px_0_rgba(0,0,0,1)] mb-4">Quiz Complete!</h2>
+                
+                <div className="bg-white border-8 border-black rounded-[3rem] p-8 w-full shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center">
+                    {masteryMode && (
+                        <div className={`w-full p-6 mb-6 border-4 border-black rounded-3xl ${masteryWon ? 'bg-yellow-200' : 'bg-red-100'} flex flex-col items-center animate-pulse`}>
+                            {masteryWon ? (
+                                <>
+                                    <Medal className="w-16 h-16 text-yellow-600 mb-2" />
+                                    <h3 className="text-3xl font-black text-yellow-800">MASTERY GRANTED!</h3>
+                                    <p className="font-bold mt-2">You achieved Mastery in "{topic}"!</p>
+                                </>
+                            ) : (
+                                <>
+                                    <AlertCircle className="w-16 h-16 text-red-500 mb-2" />
+                                    <h3 className="text-3xl font-black text-red-800">NOT QUITE!</h3>
+                                    <p className="font-bold mt-2">You needed 13/15. You got {score}. Try again!</p>
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="text-8xl font-black text-green-500 drop-shadow-[0_4px_0_rgba(0,0,0,1)] tracking-widest mb-2">
+                        {score}/{questions.length}
+                    </div>
                     <p className="text-2xl font-black text-cyan-800 mt-4">+{earnedXP} XP Earned!</p>
                     {earnedCrystals > 0 && (
                         <p className="text-2xl font-black text-orange-500 mt-2">+{earnedCrystals} Crystals! 💎</p>
                     )}
                 </div>
                 <CartoonButton onClick={() => setStep('home')} colorClass="bg-pink-400 text-3xl"><RefreshCw className="w-10 h-10"/> Finish</CartoonButton>
+            </div>
+        );
+    };
+
+    const renderMasteryTransition = (level) => {
+        const isHard = level === 'hard';
+        return (
+            <div className="flex flex-col items-center justify-center h-full space-y-8 animate-in slide-in-from-bottom-8 max-w-2xl mx-auto text-center px-4">
+                <Brain className={`w-32 h-32 animate-bounce ${isHard ? 'text-red-400' : 'text-orange-400'}`} />
+                <h2 className="text-5xl md:text-7xl font-black text-white drop-shadow-[0_4px_0_rgba(0,0,0,1)]">
+                    LEVEL UP!
+                </h2>
+                <div className="bg-white border-8 border-black rounded-[3rem] p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+                    <p className={`text-4xl font-black ${isHard ? 'text-red-600' : 'text-orange-500'} mb-4`}>
+                        {isHard ? 'HARD MODE ACTIVATED' : 'MEDIUM QUESTIONS AHEAD'}
+                    </p>
+                    <p className="text-xl font-bold text-gray-500">
+                        {isHard ? "Only 6 questions left to achieve Mastery. You can do this!" : "Things are getting trickier. Keep your focus up!"}
+                    </p>
+                </div>
+                <CartoonButton 
+                    onClick={() => {
+                        setCurrentQIndex(prev => prev + 1);
+                        setStep('quiz');
+                    }} 
+                    colorClass={`text-3xl px-12 ${isHard ? 'bg-red-400' : 'bg-orange-400'}`}
+                >
+                    Continue <ArrowRight className="w-8 h-8"/>
+                </CartoonButton>
             </div>
         );
     };
@@ -571,6 +679,8 @@ export default function QuizApp({ user, onBack, questMode = false, difficulty: f
              {step === 'loading' && renderLoading()}
              {step === 'error' && renderError()}
              {step === 'quiz' && renderQuiz()}
+             {step === 'masteryTransitionMedium' && renderMasteryTransition('medium')}
+             {step === 'masteryTransitionHard' && renderMasteryTransition('hard')}
              {step === 'results' && renderResults()}
         </div>
     );

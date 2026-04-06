@@ -127,6 +127,14 @@ export default function App() {
         />
       )}
 
+      {currentView === 'mastery' && (
+        <QuizApp 
+          user={user} 
+          masteryMode={true}
+          onBack={() => setCurrentView('dashboard')} 
+        />
+      )}
+
       {currentView === 'shop' && (
         <ShopScreen 
           user={user} 
