@@ -8,7 +8,7 @@ const SHOP_ITEMS = [
         id: 'items5050',
         name: '50 / 50',
         description: 'Remove 2 wrong answers from any question!',
-        icon: <Sparkles className="w-10 h-10 text-yellow-400" />,
+        icon: <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-400" />,
         price: 50,
         max: 3,
         color: 'bg-yellow-100',
@@ -18,7 +18,7 @@ const SHOP_ITEMS = [
         id: 'itemsPeek',
         name: 'Answer Peek',
         description: 'See what the previous player picked in a Quest!',
-        icon: <Eye className="w-10 h-10 text-cyan-400" />,
+        icon: <Eye className="w-8 h-8 sm:w-10 sm:h-10 text-cyan-400" />,
         price: 100,
         max: 3,
         color: 'bg-cyan-100',
@@ -86,15 +86,15 @@ export default function Shop({ user, profile, onBack }) {
                         const isMax = count >= item.max;
                         
                         return (
-                            <div key={item.id} className={`border-8 border-black rounded-[2.5rem] p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center text-center transition-transform hover:scale-105 bg-white`}>
-                                <div className={`p-6 rounded-3xl border-4 border-black mb-4 ${item.color}`}>
+                            <div key={item.id} className={`border-[6px] sm:border-8 border-black rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center text-center transition-transform hover:scale-105 bg-white`}>
+                                <div className={`p-4 sm:p-6 rounded-3xl border-4 border-black mb-3 sm:mb-4 ${item.color}`}>
                                     {item.icon}
                                 </div>
-                                <h3 className="text-3xl font-black mb-2">{item.name}</h3>
-                                <p className="font-bold text-gray-500 mb-6 leading-tight">{item.description}</p>
+                                <h3 className="text-2xl sm:text-3xl font-black mb-1 sm:mb-2">{item.name}</h3>
+                                <p className="font-bold text-sm sm:text-base text-gray-500 mb-4 sm:mb-6 leading-tight">{item.description}</p>
                                 
-                                <div className="mt-auto w-full space-y-4">
-                                    <div className="flex justify-between font-black text-lg px-2">
+                                <div className="mt-auto w-full space-y-3 sm:space-y-4">
+                                    <div className="flex justify-between font-black text-sm sm:text-lg px-2">
                                         <span>Inventory:</span>
                                         <span className={isMax ? 'text-red-500' : 'text-green-600'}>{count} / {item.max}</span>
                                     </div>
@@ -102,9 +102,9 @@ export default function Shop({ user, profile, onBack }) {
                                     <button
                                         onClick={() => buyItem(item)}
                                         disabled={isMax || (profile?.crystals || 0) < item.price}
-                                        className={`w-full p-4 border-4 border-black rounded-2xl font-black text-2xl flex items-center justify-center gap-3 shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[6px] transition-all ${isMax || (profile?.crystals || 0) < item.price ? 'bg-gray-200 grayscale opacity-50' : 'bg-green-400 hover:bg-green-300'}`}
+                                        className={`w-full p-3 sm:p-4 border-4 border-black rounded-[1rem] sm:rounded-2xl font-black text-xl sm:text-2xl flex items-center justify-center gap-2 sm:gap-3 shadow-[0px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[4px] sm:active:translate-y-[6px] transition-all ${isMax || (profile?.crystals || 0) < item.price ? 'bg-gray-200 grayscale opacity-50' : 'bg-green-400 hover:bg-green-300'}`}
                                     >
-                                        <Gem className="w-6 h-6" /> {item.price}
+                                        <Gem className="w-5 h-5 sm:w-6 sm:h-6" /> {item.price}
                                     </button>
                                 </div>
                             </div>
