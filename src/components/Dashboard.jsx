@@ -199,28 +199,28 @@ export default function Dashboard({ user, userRole, profile, onNavigate }) {
       </div>
 
       <div className="w-full space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-            <button 
-                onClick={() => onNavigate('quiz')}
-                className="w-full bg-green-400 hover:bg-green-300 border-4 border-black rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-center gap-2 text-2xl sm:text-3xl font-black text-black transition-transform active:translate-y-[4px] shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
-            >
-                <Play className="w-10 h-10 fill-current" /> Play Quiz
-            </button>
+        <button 
+            onClick={() => onNavigate('quiz')}
+            className="w-full bg-green-400 hover:bg-green-300 border-4 border-black rounded-3xl p-6 flex flex-row items-center justify-center gap-4 text-3xl md:text-5xl font-black text-black transition-transform active:translate-y-[4px] shadow-[0px_8px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
+        >
+            <Play className="w-10 h-10 md:w-12 md:h-12 fill-current" /> Play Quiz
+        </button>
 
+        <div className="grid grid-cols-2 gap-4">
             <button 
                 onClick={() => onNavigate('questLobby')}
                 className="w-full bg-purple-400 hover:bg-purple-300 border-4 border-black rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-center gap-2 text-2xl sm:text-3xl font-black text-black transition-transform active:translate-y-[4px] shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
             >
-                <Swords className="w-10 h-10 fill-current" /> Epic Quest
+                <Swords className="w-8 h-8 sm:w-10 sm:h-10 fill-current" /> Epic Quest
+            </button>
+
+            <button 
+                onClick={() => onNavigate('mastery')}
+                className="w-full bg-blue-500 hover:bg-blue-400 border-4 border-black rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-center gap-2 text-2xl sm:text-3xl font-black text-white transition-transform active:translate-y-[4px] shadow-[0px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none text-center leading-tight"
+            >
+                <GraduationCap className="w-8 h-8 sm:w-10 sm:h-10" /> Mastery Challenge
             </button>
         </div>
-
-        <button 
-            onClick={() => onNavigate('mastery')}
-            className="w-full bg-blue-500 hover:bg-blue-400 border-4 border-black rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-center gap-4 text-3xl font-black text-white transition-transform active:translate-y-[4px] shadow-[0px_8px_0px_0px_rgba(0,0,0,1)] active:shadow-none"
-        >
-            <GraduationCap className="w-12 h-12" /> Mastery Challenge
-        </button>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <button 
