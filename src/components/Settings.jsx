@@ -142,6 +142,8 @@ export default function SettingsScreen({ user, userRole, profile, onBack }) {
       return <AdminPanel onBack={() => setShowAdmin(false)} />;
   }
 
+  const isParent = userRole === 'parent' || userRole === 'admin' || user?.email;
+
   return (
     <div className="absolute inset-0 bg-blue-500 overflow-y-auto p-4 md:p-8 z-50">
       <button 
@@ -172,9 +174,19 @@ export default function SettingsScreen({ user, userRole, profile, onBack }) {
            </div>
         )}
 
-        {userRole === 'parent' ? (
+        {isParent ? (
           <div className="space-y-8">
-            <div className="border-4 border-black p-6 rounded-3xl bg-cyan-50">
+            {user?.email && (
+                <div className="bg-slate-100 border-4 border-black p-4 rounded-2xl font-bold flex items-center gap-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-8 h-8"/>
+                    <div>
+                        <div className="text-slate-500 text-sm">Signed in with Google</div>
+                        <div className="text-lg text-slate-800">{user.email}</div>
+                    </div>
+                </div>
+            )}
+
+            <div className="border-4 border-black p-6 rounded-3xl bg-cyan-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               <h3 className="text-2xl font-black mb-4">Add a Child Profile</h3>
               <div className="flex gap-2 mb-4">
                 <input 

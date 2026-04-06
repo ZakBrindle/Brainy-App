@@ -70,9 +70,12 @@ export default function Dashboard({ user, userRole, profile, onNavigate }) {
         </div>
         
         <h2 className="text-4xl font-black mt-4 mb-2">Hello, {profile?.displayName || 'Brainiac'}!</h2>
-        <div className="inline-block bg-purple-100 border-4 border-black px-4 py-1 rounded-full font-black text-purple-700 capitalize mb-6">
-          {userRole} Account
-        </div>
+        <button 
+          onClick={() => onNavigate('account')}
+          className="inline-block bg-purple-100 hover:bg-purple-200 border-4 border-black px-6 py-2 rounded-full font-black text-purple-700 capitalize mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-y-[4px] transition-all"
+        >
+          {userRole === 'admin' ? 'Admin' : userRole} Account
+        </button>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="bg-orange-100 border-4 border-black rounded-2xl p-4 flex flex-col items-center justify-center">

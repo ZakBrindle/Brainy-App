@@ -4,6 +4,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './lib/firebase';
 import LoginScreen from './components/LoginScreen';
 import Dashboard from './components/Dashboard';
+import AccountScreen from './components/Account';
 import SettingsScreen from './components/Settings';
 import FriendsList from './components/FriendsList';
 import QuizApp from './components/QuizApp';
@@ -77,6 +78,15 @@ export default function App() {
           userRole={userRole} 
           profile={profileData} 
           onNavigate={setCurrentView} 
+        />
+      )}
+
+      {currentView === 'account' && (
+        <AccountScreen 
+          user={user} 
+          userRole={userRole} 
+          profile={profileData}
+          onBack={() => setCurrentView('dashboard')} 
         />
       )}
       
