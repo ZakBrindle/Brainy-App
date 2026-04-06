@@ -3,7 +3,7 @@ import { db } from '../lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { Users, UserPlus, Search, Shield, ArrowLeft, Trophy, Flame } from 'lucide-react';
 
-export default function FriendsList({ user, userRole, parentUid, onBack }) {
+export default function FriendsList({ user, userRole, parentUid, profile, onBack }) {
   const [friends, setFriends] = useState([]);
   const [searchCode, setSearchCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,12 +55,25 @@ export default function FriendsList({ user, userRole, parentUid, onBack }) {
       const codeData = snap.docs[0].data();
       const friendData = { uid: codeData.childId, name: codeData.childName, type: 'child' };
 
-      // Save to current user's document
-      await updateDoc(doc(db, 'users', user.uid), {
-        friends: arrayUnion(friendData)
-      });
+      if (userRole === 'child' && parentUid) {
+          // Send request to parent
+          await updateDoc(doc(db, 'users', parentUid), {
+              pendingFriendRequests: arrayUnion({
+                  requesterUid: user.uid,
+                  requesterName: profile?.displayName || 'Unknown',
+                  childUid: codeData.childId,
+                  childName: codeData.childName
+              })
+          });
+          alert("Friend request sent to your parents for approval!");
+      } else {
+          // Save to current user's document directly if Parent
+          await updateDoc(doc(db, 'users', user.uid), {
+            friends: arrayUnion(friendData)
+          });
+          setFriends(prev => [...prev, friendData]);
+      }
 
-      setFriends(prev => [...prev, friendData]);
       setSearchCode('');
     } catch (e) {
       console.error(e);
@@ -112,7 +125,10 @@ export default function FriendsList({ user, userRole, parentUid, onBack }) {
             </div>
           ) : (
             friends.map((f, i) => (
-              <div key={i} className="bg-white border-4 border-black rounded-2xl p-4 flex flex-col shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div key={i} className="bg-white border-4 border-black rounded-2xl p-4 flex flex-col shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative">
+                {f.type === 'parent' && (
+                  <div className="absolute top-4 right-4 bg-purple-100 text-purple-700 text-xs font-black px-2 py-1 border-2 border-black rounded-lg">PARENT</div>
+                )}
                 <div className="text-xl font-black mb-1">{f.name}</div>
                 <div className="flex gap-4 mt-4">
                    {/* In a complete implementation we would query their specific stats from their user profile or subcollection. Simulated UI here. */}

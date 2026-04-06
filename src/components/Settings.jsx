@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, updateDoc } from 'firebase/firestore';
-import { Settings, UserPlus, Save, CheckCircle, ArrowLeft, ShieldAlert } from 'lucide-react';
+import { Settings, UserPlus, Save, CheckCircle, ArrowLeft, ShieldAlert, Check, X } from 'lucide-react';
 import AdminPanel from './AdminPanel';
 
-export default function SettingsScreen({ user, userRole, onBack }) {
+export default function SettingsScreen({ user, userRole, profile, onBack }) {
   const [childrenList, setChildrenList] = useState([]);
+  const [liveChildren, setLiveChildren] = useState([]);
   const [newChildName, setNewChildName] = useState('');
   const [generatedCode, setGeneratedCode] = useState(null);
   const [shareFriends, setShareFriends] = useState(false);
@@ -15,8 +16,17 @@ export default function SettingsScreen({ user, userRole, onBack }) {
   useEffect(() => {
     if (userRole === 'parent') {
       loadParentSettings();
+      
+      const { onSnapshot } = require('firebase/firestore');
+      const q = query(collection(db, 'users'), where('parentUid', '==', user.uid));
+      const unsub = onSnapshot(q, (snap) => {
+          const stats = [];
+          snap.forEach(d => stats.push({ id: d.id, ...d.data() }));
+          setLiveChildren(stats);
+      });
+      return () => unsub();
     }
-  }, [userRole]);
+  }, [userRole, user.uid]);
 
   const loadParentSettings = async () => {
     const docRef = doc(db, 'users', user.uid);
@@ -95,6 +105,39 @@ export default function SettingsScreen({ user, userRole, onBack }) {
     await updateDoc(doc(db, 'users', user.uid), { shareFriends: newVal });
   };
 
+  const approveFriendRequest = async (request) => {
+    try {
+      const { arrayUnion, arrayRemove } = await import('firebase/firestore');
+      
+      // 1. Remove from parent's pending list
+      await updateDoc(doc(db, 'users', user.uid), {
+         pendingFriendRequests: arrayRemove(request)
+      });
+      
+      // 2. Add to Child's friends
+      await updateDoc(doc(db, 'users', request.childUid), {
+         friends: arrayUnion({ uid: request.requesterUid, type: 'child', name: request.requesterName })
+      });
+      
+      // 3. Add to Requester's friends
+      await updateDoc(doc(db, 'users', request.requesterUid), {
+         friends: arrayUnion({ uid: request.childUid, type: 'child', name: request.childName })
+      });
+      
+      alert("Friend request approved!");
+    } catch(e) {
+      console.error(e);
+      alert("Failed to approve friend.");
+    }
+  };
+
+  const denyFriendRequest = async (request) => {
+    const { arrayRemove } = await import('firebase/firestore');
+    await updateDoc(doc(db, 'users', user.uid), {
+       pendingFriendRequests: arrayRemove(request)
+    });
+  };
+
   if (showAdmin) {
       return <AdminPanel onBack={() => setShowAdmin(false)} />;
   }
@@ -160,26 +203,87 @@ export default function SettingsScreen({ user, userRole, onBack }) {
               {childrenList.length > 0 && (
                 <div>
                   <h4 className="font-black text-lg mb-2">Your Children</h4>
-                  <ul className="space-y-2">
-                    {childrenList.map(c => (
-                      <li key={c.id} className="bg-white border-2 border-black p-3 rounded-lg flex justify-between items-center font-bold">
-                        <span>{c.name}</span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-gray-500 font-mono">{c.activeCode}</span>
-                          <button
-                            onClick={() => regenerateCode(c.id, c.name)}
-                            disabled={loading}
-                            className="bg-yellow-400 border-2 border-black rounded-lg px-3 py-1 text-sm font-black hover:bg-yellow-300 disabled:opacity-50"
-                          >
-                            New Code
-                          </button>
-                        </div>
-                      </li>
-                    ))}
+                  <ul className="space-y-4">
+                    {childrenList.map(c => {
+                      const stats = liveChildren.find(lc => lc.id === c.id || lc.childId === c.id);
+                      return (
+                        <li key={c.id} className="bg-white border-4 border-black p-4 rounded-2xl flex flex-col gap-3 font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                          <div className="flex justify-between items-center bg-cyan-100 p-2 rounded-xl border-2 border-black">
+                            <span className="text-xl font-black">{c.name}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-slate-600 font-mono tracking-widest bg-white px-2 py-1 border-2 border-black rounded-md">{c.activeCode}</span>
+                              <button
+                                onClick={() => regenerateCode(c.id, c.name)}
+                                disabled={loading}
+                                className="bg-yellow-400 border-2 border-black rounded-lg px-3 py-1 text-sm font-black hover:bg-yellow-300 disabled:opacity-50 active:translate-y-[2px]"
+                              >
+                                New Code
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {/* Live Stats */}
+                          {stats ? (
+                              <div className="grid grid-cols-4 gap-2 text-center text-sm">
+                                  <div className="bg-slate-100 rounded-lg p-2 border-2 border-black">
+                                      <div className="font-black text-lg">{stats.totalQuizzes || 0}</div>
+                                      <div className="text-slate-500">Quizzes</div>
+                                  </div>
+                                  <div className="bg-slate-100 rounded-lg p-2 border-2 border-black">
+                                      <div className="font-black text-lg">{stats.totalQuestsStarted || 0}</div>
+                                      <div className="text-slate-500">Quests</div>
+                                  </div>
+                                  <div className="bg-slate-100 rounded-lg p-2 border-2 border-black">
+                                      <div className="font-black text-lg">{stats.totalSessions || 0}</div>
+                                      <div className="text-slate-500">Sessions</div>
+                                  </div>
+                                  <div className="bg-slate-100 rounded-lg p-2 border-2 border-black">
+                                      <div className="font-black text-lg text-purple-600">{stats.xp || 0}</div>
+                                      <div className="text-slate-500">XP</div>
+                                  </div>
+                              </div>
+                          ) : (
+                              <div className="text-slate-400 italic text-center p-2">Child hasn't logged in yet.</div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
             </div>
+
+            {/* Pending Friend Requests */}
+            {profile?.pendingFriendRequests?.length > 0 && (
+                <div className="border-4 border-black p-6 rounded-3xl bg-yellow-50">
+                    <h3 className="text-2xl font-black mb-4 flex items-center gap-2 text-yellow-800">
+                       <UserPlus className="w-6 h-6" /> Pending Friend Approvals
+                    </h3>
+                    <div className="space-y-4">
+                        {profile.pendingFriendRequests.map((req, i) => (
+                            <div key={i} className="bg-white border-4 border-black p-4 rounded-xl flex items-center justify-between font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                <div>
+                                    <span className="text-xl font-black text-purple-600">{req.requesterName}</span> wants to be friends with <span className="text-xl font-black text-cyan-600">{req.childName}</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => approveFriendRequest(req)}
+                                        className="bg-green-400 border-4 border-black p-2 rounded-xl hover:bg-green-300"
+                                    >
+                                        <Check className="w-6 h-6" />
+                                    </button>
+                                    <button 
+                                        onClick={() => denyFriendRequest(req)}
+                                        className="bg-red-400 border-4 border-black p-2 rounded-xl hover:bg-red-300"
+                                    >
+                                        <X className="w-6 h-6" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="border-4 border-black p-6 rounded-3xl bg-pink-50 flex items-center justify-between">
               <div>

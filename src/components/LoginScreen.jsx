@@ -71,9 +71,16 @@ export default function LoginScreen({ onLogin }) {
         parentUid: codeData.parentUid,
         childId: codeData.childId,
         displayName: codeData.childName,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        friends: [{ uid: codeData.parentUid, type: 'parent', name: 'Parent' }]
       }, { merge: true });
       
+      // Auto-add child to parent
+      const { updateDoc, arrayUnion } = await import('firebase/firestore');
+      await updateDoc(doc(db, 'users', codeData.parentUid), {
+        friends: arrayUnion({ uid: user.uid, type: 'child', name: codeData.childName })
+      });
+
     } catch (err) {
       console.error(err);
       setError('Failed to login with code.');

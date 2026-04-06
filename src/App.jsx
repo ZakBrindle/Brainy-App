@@ -30,9 +30,19 @@ export default function App() {
         const unsubDoc = onSnapshot(doc(db, 'users', currentUser.uid), (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
-            setUserRole(data.role);
+            let r = data.role;
+            
+            // Auto-resolve legacy google accounts to parent
+            if (!r && currentUser.email) {
+                r = 'parent';
+                import('firebase/firestore').then(({ updateDoc }) => {
+                    updateDoc(doc(db, 'users', currentUser.uid), { role: 'parent' }).catch(console.error);
+                });
+            }
+
+            setUserRole(r);
             setParentUid(data.parentUid || null);
-            setProfileData(data);
+            setProfileData({ ...data, role: r });
           }
           setLoading(false);
         });
@@ -74,6 +84,7 @@ export default function App() {
         <SettingsScreen 
           user={user} 
           userRole={userRole} 
+          profile={profileData}
           onBack={() => setCurrentView('dashboard')} 
         />
       )}
@@ -83,6 +94,7 @@ export default function App() {
           user={user} 
           userRole={userRole} 
           parentUid={parentUid}
+          profile={profileData}
           onBack={() => setCurrentView('dashboard')} 
         />
       )}
